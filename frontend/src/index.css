@@ -1,0 +1,136 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Central Theme CSS Variables */
+  --color-primary: #1e3a8a;
+  --color-primary-hover: #172554;
+  --color-primary-light: #eff6ff;
+  --color-brand-dark: #0a1733;
+
+  --color-mandi-green: #0e6037;
+  --color-mandi-light: #e6f4ea;
+  --color-mandi-hover: #0a4729;
+  --color-mandi-red: #dc2626;
+
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-border: #e2e8f0;
+
+  --color-success: #16a34a;
+  --color-danger: #dc2626;
+  --color-warning: #f59e0b;
+}
+
+html, body, #root {
+  min-height: 100%;
+}
+
+body {
+  font-family: 'Noto Sans Tamil', 'Noto Sans', sans-serif;
+  background: var(--color-bg);
+  color: #0f172a;
+  font-size: 13.5px;
+  line-height: 1.5;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ==============================================================
+ * CENTRAL UI COMPONENTS: INPUTS, CARDS, BUTTONS, HEADERS
+ * ============================================================== */
+
+/* Form Controls */
+.input {
+  @apply w-full rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-all bg-white text-slate-900;
+}
+
+.label {
+  @apply block text-xs sm:text-[13px] font-semibold text-gray-700 mb-1;
+}
+
+/* Cards */
+.card {
+  @apply bg-white rounded-xl shadow-sm border border-gray-200/80 p-3 sm:p-4;
+}
+
+.card-header {
+  @apply px-4 py-3 border-b border-gray-100 flex items-center justify-between;
+}
+
+.card-body {
+  @apply p-3 sm:p-4;
+}
+
+.card-footer {
+  @apply px-4 py-3 bg-gray-50 border-t border-gray-100 rounded-b-xl flex items-center justify-between;
+}
+
+/* Buttons */
+.btn {
+  @apply inline-flex items-center justify-center rounded-lg px-3.5 py-2 text-xs sm:text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] select-none;
+}
+
+.btn-primary {
+  @apply btn bg-blue-900 text-white hover:bg-blue-950 shadow-sm;
+}
+
+.btn-secondary {
+  @apply btn bg-gray-100 text-gray-700 hover:bg-gray-200;
+}
+
+.btn-danger {
+  @apply btn bg-red-600 text-white hover:bg-red-700 shadow-sm;
+}
+
+.btn-success {
+  @apply btn bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm;
+}
+
+.btn-warning {
+  @apply btn bg-amber-500 text-white hover:bg-amber-600 shadow-sm;
+}
+
+.btn-mandi {
+  @apply btn bg-[#0e6037] text-white hover:bg-[#0a4729] shadow-sm;
+}
+
+.btn-outline {
+  @apply btn border border-gray-300 text-gray-700 bg-white hover:bg-gray-50;
+}
+
+.btn-outline-mandi {
+  @apply btn border-2 border-[#0e6037] text-[#0e6037] bg-white hover:bg-[#e6f4ea] font-bold;
+}
+
+/* Headers */
+.page-header {
+  @apply mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3;
+}
+
+.page-title {
+  @apply text-xl sm:text-2xl font-black text-slate-900 tracking-tight;
+}
+
+.page-subtitle {
+  @apply text-xs sm:text-sm text-slate-500 mt-0.5;
+}
+
+/* Tables */
+table.data-table {
+  @apply w-full text-xs sm:text-sm border-collapse;
+}
+
+table.data-table th {
+  @apply text-left text-[11px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wide py-2 px-2.5 sm:px-3 border-b border-gray-200 bg-gray-50/80;
+}
+
+table.data-table td {
+  @apply py-2 px-2.5 sm:px-3 border-b border-gray-100;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

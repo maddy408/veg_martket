@@ -2,8 +2,17 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../vendor/autoload.php';
-require_once __DIR__ . '/../config/database.php';
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    require_once __DIR__ . '/vendor/autoload.php';
+} else {
+    require_once __DIR__ . '/../vendor/autoload.php';
+}
+
+if (file_exists(__DIR__ . '/config/database.php')) {
+    require_once __DIR__ . '/config/database.php';
+} else {
+    require_once __DIR__ . '/../config/database.php';
+}
 
 use App\Controllers\AuditLogController;
 use App\Controllers\AuthController;
@@ -18,6 +27,7 @@ use App\Controllers\PurchaseController;
 use App\Controllers\ReportController;
 use App\Controllers\SettingsController;
 use App\Controllers\UserController;
+use App\Helpers\Response;
 use App\Helpers\Router;
 use App\Middleware\CorsMiddleware;
 
@@ -38,6 +48,9 @@ if (!str_starts_with($uri, '/api') && $uri !== '/') {
 
 $pdo = get_pdo();
 $router = new Router();
+
+$router->get('/', fn () => Response::json(['status' => 'ok', 'app' => 'Sri Bhavani Vegetables API', 'version' => '1.0.0']));
+$router->get('/api', fn () => Response::json(['status' => 'ok', 'app' => 'Sri Bhavani Vegetables API', 'version' => '1.0.0']));
 
 $auth = new AuthController($pdo);
 $router->post('/api/auth/login', fn () => $auth->login());

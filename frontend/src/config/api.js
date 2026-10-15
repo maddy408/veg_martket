@@ -16,7 +16,7 @@ export const API_BASE_URL =
 
 export const APP_CONFIG = {
   apiBaseUrl: API_BASE_URL,
-  appName: 'AJ Agency ERP',
+  appName: 'Sri Bhavani Vegetables',
   version: '1.0.0',
 };
 

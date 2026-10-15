@@ -1,6 +1,6 @@
 /**
  * =======================================================================
- * AJ AGENCY / VEG POS - CENTRAL DESIGN SYSTEM & THEME
+ * SRI BHAVANI VEGETABLES - CENTRAL DESIGN SYSTEM & THEME
  * =======================================================================
  * This is the SINGLE COMMON FILE for:
  *  1. App Colors (Brand Navy, Traditional Mandi Green, Status colors, etc.)

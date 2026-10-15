@@ -34,3 +34,9 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# Local deployment scripts and scratch files
+deploy.py
+*.sql.gz
+backend/database/veg_pos_full_dump_utf8.sql
+scratch/

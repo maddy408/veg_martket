@@ -33,7 +33,7 @@ class SettingsController
 
         $stmt = $this->pdo->prepare(
             'INSERT INTO settings (`key`, `value`) VALUES (:key, :value)
-             ON DUPLICATE KEY UPDATE `value` = :value'
+             ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)'
         );
         foreach ($body as $key => $value) {
             $stmt->execute(['key' => $key, 'value' => is_array($value) ? json_encode($value, JSON_UNESCAPED_UNICODE) : (string) $value]);

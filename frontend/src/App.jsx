@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth.jsx';
 import { SettingsProvider } from './hooks/useSettings.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
-import PWAInstallPrompt from './components/PWAInstallPrompt.jsx';
+import PWAInstallBanner from './components/PWAInstallBanner.jsx';
 import Login from './pages/Login.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Billing from './pages/Billing.jsx';
@@ -22,7 +22,6 @@ export default function App() {
     <AuthProvider>
       <SettingsProvider>
         <BrowserRouter>
-          <PWAInstallPrompt />
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/print/bill/:id" element={<PrintBill />} />
@@ -41,6 +40,7 @@ export default function App() {
             <Route path="/settings" element={<ProtectedRoute adminOnly><Settings /></ProtectedRoute>} />
             <Route path="/users" element={<ProtectedRoute adminOnly><Navigate to="/settings?tab=users" replace /></ProtectedRoute>} />
           </Routes>
+          <PWAInstallBanner />
         </BrowserRouter>
       </SettingsProvider>
     </AuthProvider>

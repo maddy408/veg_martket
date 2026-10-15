@@ -3,7 +3,6 @@ import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { useSettings } from '../hooks/useSettings.jsx';
-import { triggerPWAInstall } from './PWAInstallPrompt.jsx';
 
 const LINKS = [
   { to: '/', key: 'dashboard' },
@@ -55,19 +54,8 @@ export default function TopNav() {
           ))}
         </div>
 
-        {/* Right Section: Install App, Desktop Logout & Mobile Hamburger */}
+        {/* Right Section: Desktop Logout & Mobile Hamburger */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* PWA Install Button (Desktop) */}
-          <button
-            type="button"
-            onClick={triggerPWAInstall}
-            title={t('nav.install_app', 'Install App')}
-            className="hidden md:flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold bg-emerald-600/90 hover:bg-emerald-500 text-white rounded-md border border-emerald-400/40 shadow-xs transition-all cursor-pointer"
-          >
-            <span>📲</span>
-            <span>{t('nav.install_app', 'Install App')}</span>
-          </button>
-
           {/* Desktop Logout Button */}
           <button
             onClick={logout}
@@ -114,22 +102,6 @@ export default function TopNav() {
       {/* Mobile Drawer Navigation Menu (Responsive Web App / PWA friendly) */}
       {mobileOpen && (
         <div className="md:hidden bg-[#0c1d42] border-t border-blue-900/60 px-3 py-2 space-y-1 shadow-lg animate-fadeIn">
-          {/* PWA Install Button (Mobile Drawer) */}
-          <button
-            type="button"
-            onClick={() => {
-              setMobileOpen(false);
-              triggerPWAInstall();
-            }}
-            className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition-all cursor-pointer mb-2"
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-base">📲</span>
-              <span>ஆப்பை நிறுவுங்கள் (Install App)</span>
-            </div>
-            <span className="text-xs bg-white/20 px-1.5 py-0.5 rounded font-mono">PWA</span>
-          </button>
-
           {visibleLinks.map((link) => (
             <NavLink
               key={link.to}

@@ -22,3 +22,85 @@ export function todayISO() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
+
+// Map standard English item names to pristine Tamil
+export const TAMIL_ITEM_MAP = {
+  'tomato': 'தக்காளி',
+  'ladies finger': 'வெண்டைக்காய்',
+  'chilli': 'மிளகாய்',
+  'green chilli': 'பச்சை மிளகாய்',
+  'curry leaves': 'கருவேப்பிலை',
+  'raw mango': 'மாங்காய்',
+  'striped brinjal': 'வரி கத்தரி',
+  'brinjal': 'கத்தரிக்காய்',
+  'onion': 'வெங்காயம்',
+  'spring onion': 'கொத்து வெங்காயம்',
+  'potato': 'உருளைக்கிழங்கு',
+  'carrot': 'கேரட்',
+  'beans': 'பீன்ஸ்',
+  'drumstick': 'முருங்கைக்காய்',
+  'drumstick leaves': 'முருங்கை இலை',
+  'avarai beans': 'அவரைக்காய்',
+  'bitter gourd': 'பாகற்காய்',
+  'ridge gourd': 'புடலங்காய்',
+  'snake gourd': 'பீர்க்கங்காய்',
+  'bottle gourd': 'சுரைக்காய்',
+  'pumpkin': 'பூசணிக்காய்',
+  'ash gourd': 'வெள்ளைப்பூசணி',
+  'cucumber': 'வெள்ளரிக்காய்',
+  'ivy gourd': 'கோவைக்காய்',
+  'cluster beans': 'கொத்தவரங்காய்',
+  'radish': 'முள்ளங்கி',
+  'beetroot': 'பீட்ரூட்',
+  'cauliflower': 'காலிஃபிளவர்',
+  'cabbage': 'முட்டைக்கோஸ்',
+  'coriander leaves': 'கொத்தமல்லி',
+  'mint leaves': 'புதினா',
+  'greens': 'கீரை',
+  'ginger': 'இஞ்சி',
+  'garlic': 'பூண்டு',
+  'raw banana': 'வாழைக்காய்',
+  'banana flower': 'வாழைப்பூ',
+  'colocasia': 'சேப்பங்கிழங்கு',
+  'tapioca': 'மரவள்ளிக்கிழங்கு',
+  'elephant yam': 'கருணைக்கிழங்கு',
+  'raw turmeric': 'மஞ்சள் கிழங்கு',
+  'sweet corn': 'சோளம்',
+  'green peas': 'பட்டாணி',
+  'lorry freight': 'லாரி வாடகை',
+  'cooli': 'கூலி'
+};
+
+/**
+ * Checks if a string contains Greek/CP1252 corrupted mojibake characters.
+ */
+export function isMojibake(str) {
+  if (!str) return false;
+  return /[\u0370-\u03ff\u1f00-\u1fff«¬»çñúí]/.test(str);
+}
+
+/**
+ * Returns clean Tamil / English combined name, safely recovering from encoding issues.
+ */
+export function cleanTamilItem(nameTa, nameEn) {
+  const en = (nameEn || '').trim();
+  const ta = (nameTa || '').trim();
+
+  // If Tamil text is garbled with mojibake Greek characters or question marks
+  if (isMojibake(ta) || !ta || ta.includes('?')) {
+    if (en) {
+      const mapped = TAMIL_ITEM_MAP[en.toLowerCase()];
+      if (mapped) {
+        return `${mapped} / ${en}`;
+      }
+      return en;
+    }
+    return ta || '—';
+  }
+
+  if (en && en.toLowerCase() !== ta.toLowerCase()) {
+    return `${ta} / ${en}`;
+  }
+  return ta || en || '—';
+}
+

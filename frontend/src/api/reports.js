@@ -1,6 +1,26 @@
 import client from './client';
+import { cleanTamilItem } from '../utils/format';
 
-export const dashboardSummary = () => client.get('/dashboard/summary').then((r) => r.data);
+function sanitizeTopItems(items) {
+  if (!Array.isArray(items)) return items;
+  return items.map((it) => {
+    const clean = cleanTamilItem(it.item_name_ta, it.item_name_en);
+    const pureTa = clean && clean.includes(' / ') ? clean.split(' / ')[0] : clean;
+    return {
+      ...it,
+      item_name_ta: pureTa || it.item_name_ta,
+    };
+  });
+}
+
+export const dashboardSummary = () =>
+  client.get('/dashboard/summary').then((r) => {
+    const data = r.data || {};
+    if (data.top_items_month) {
+      data.top_items_month = sanitizeTopItems(data.top_items_month);
+    }
+    return data;
+  });
 
 export const dailySalesReport = (params) => client.get('/reports/daily-sales', { params }).then((r) => r.data);
 export const itemWiseSalesReport = (params) => client.get('/reports/item-wise-sales', { params }).then((r) => r.data);

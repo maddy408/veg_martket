@@ -1,20 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { dashboardSummary } from '../api/reports';
-import { formatINR, formatDateDMY } from '../utils/format';
+import { formatINR, formatDateDMY, cleanTamilItem } from '../utils/format';
 
 function formatItemName(it) {
-  const ta = it.item_name_ta?.trim();
-  const en = it.item_name_en?.trim();
-  const isGarbled = !ta || ta.includes('?');
-
-  if (isGarbled) {
-    return en || ta || '—';
-  }
-  if (en && en.toLowerCase() !== ta.toLowerCase()) {
-    return `${ta} / ${en}`;
-  }
-  return ta;
+  return cleanTamilItem(it.item_name_ta, it.item_name_en);
 }
 
 function getSmoothBezierPath(pts) {

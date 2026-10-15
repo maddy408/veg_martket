@@ -62,3 +62,48 @@ UPDATE items SET `name_ta` = 'சோளம்' WHERE `name_en` = 'Sweet Corn' OR
 UPDATE items SET `name_ta` = 'பட்டாணி' WHERE `name_en` = 'Green Peas' OR `code` = 'AP';
 UPDATE items SET `name_ta` = 'லாரி வாடகை' WHERE `name_en` = 'Lorry Freight' OR `code` = 'AQ';
 UPDATE items SET `name_ta` = 'கூலி' WHERE `name_en` = 'Cooli' OR `code` = 'AR';
+INSERT INTO items (`code`, `name_en`, `name_ta`, `unit`, `default_rate`, `active`)
+VALUES ('AS', 'Nelli', 'நெல்லிக்காய்', 'kg', 0.00, 1)
+ON DUPLICATE KEY UPDATE `name_ta` = 'நெல்லிக்காய்';
+UPDATE items SET `name_ta` = 'நெல்லிக்காய்' WHERE LOWER(`name_en`) IN ('nelli', 'amla');
+UPDATE items SET `name_ta` = 'எலுமிச்சை' WHERE LOWER(`name_en`) IN ('lemon', 'lime');
+UPDATE items SET `name_ta` = 'தேங்காய்' WHERE LOWER(`name_en`) = 'coconut';
+
+-- 4. Fix existing bill_lines and purchase_lines historical data
+UPDATE bill_lines SET `item_name_ta` = 'நெல்லிக்காய்' WHERE LOWER(TRIM(`item_name_en`)) IN ('nelli', 'amla');
+UPDATE bill_lines SET `item_name_ta` = 'தக்காளி' WHERE LOWER(TRIM(`item_name_en`)) = 'tomato';
+UPDATE bill_lines SET `item_name_ta` = 'வெண்டைக்காய்' WHERE LOWER(TRIM(`item_name_en`)) IN ('ladies finger', 'lady finger', 'ladiesfinger');
+UPDATE bill_lines SET `item_name_ta` = 'கத்தரிக்காய்' WHERE LOWER(TRIM(`item_name_en`)) = 'brinjal';
+UPDATE bill_lines SET `item_name_ta` = 'கேரட்' WHERE LOWER(TRIM(`item_name_en`)) = 'carrot';
+UPDATE bill_lines SET `item_name_ta` = 'பச்சை மிளகாய்' WHERE LOWER(TRIM(`item_name_en`)) = 'green chilli';
+UPDATE bill_lines SET `item_name_ta` = 'மிளகாய்' WHERE LOWER(TRIM(`item_name_en`)) = 'chilli';
+UPDATE bill_lines SET `item_name_ta` = 'வெள்ளைப்பூசணி' WHERE LOWER(TRIM(`item_name_en`)) = 'ash gourd';
+UPDATE bill_lines SET `item_name_ta` = 'பூசணிக்காய்' WHERE LOWER(TRIM(`item_name_en`)) = 'pumpkin';
+UPDATE bill_lines SET `item_name_ta` = 'அவரைக்காய்' WHERE LOWER(TRIM(`item_name_en`)) = 'avarai beans';
+UPDATE bill_lines SET `item_name_ta` = 'முருங்கை இலை' WHERE LOWER(TRIM(`item_name_en`)) = 'drumstick leaves';
+UPDATE bill_lines SET `item_name_ta` = 'புடலங்காய்' WHERE LOWER(TRIM(`item_name_en`)) = 'ridge gourd';
+UPDATE bill_lines SET `item_name_ta` = 'வெங்காயம்' WHERE LOWER(TRIM(`item_name_en`)) = 'onion';
+UPDATE bill_lines SET `item_name_ta` = 'மாங்காய்' WHERE LOWER(TRIM(`item_name_en`)) = 'raw mango';
+UPDATE bill_lines SET `item_name_ta` = 'சுரைக்காய்' WHERE LOWER(TRIM(`item_name_en`)) = 'bottle gourd';
+UPDATE bill_lines SET `item_name_ta` = 'கொத்தவரங்காய்' WHERE LOWER(TRIM(`item_name_en`)) = 'cluster beans';
+UPDATE bill_lines SET `item_name_ta` = 'கோவைக்காய்' WHERE LOWER(TRIM(`item_name_en`)) = 'ivy gourd';
+UPDATE bill_lines SET `item_name_ta` = 'பாகற்காய்' WHERE LOWER(TRIM(`item_name_en`)) = 'bitter gourd';
+UPDATE bill_lines SET `item_name_ta` = 'பீர்க்கங்காய்' WHERE LOWER(TRIM(`item_name_en`)) = 'snake gourd';
+UPDATE bill_lines SET `item_name_ta` = 'வரி கத்தரி' WHERE LOWER(TRIM(`item_name_en`)) = 'striped brinjal';
+UPDATE bill_lines SET `item_name_ta` = 'உருளைக்கிழங்கு' WHERE LOWER(TRIM(`item_name_en`)) = 'potato';
+UPDATE bill_lines SET `item_name_ta` = 'கொத்து வெங்காயம்' WHERE LOWER(TRIM(`item_name_en`)) = 'spring onion';
+UPDATE bill_lines SET `item_name_ta` = 'கருவேப்பிலை' WHERE LOWER(TRIM(`item_name_en`)) = 'curry leaves';
+
+UPDATE bill_lines bl
+JOIN items i ON (LOWER(TRIM(i.name_en)) = LOWER(TRIM(bl.item_name_en)) OR i.id = bl.item_id)
+SET bl.item_name_ta = i.name_ta;
+
+UPDATE purchase_lines SET `item_name_ta` = 'நெல்லிக்காய்' WHERE LOWER(TRIM(`item_name_en`)) IN ('nelli', 'amla');
+UPDATE purchase_lines SET `item_name_ta` = 'தக்காளி' WHERE LOWER(TRIM(`item_name_en`)) = 'tomato';
+UPDATE purchase_lines SET `item_name_ta` = 'வெண்டைக்காய்' WHERE LOWER(TRIM(`item_name_en`)) IN ('ladies finger', 'lady finger', 'ladiesfinger');
+UPDATE purchase_lines SET `item_name_ta` = 'கத்தரிக்காய்' WHERE LOWER(TRIM(`item_name_en`)) = 'brinjal';
+UPDATE purchase_lines SET `item_name_ta` = 'கேரட்' WHERE LOWER(TRIM(`item_name_en`)) = 'carrot';
+
+UPDATE purchase_lines pl
+JOIN items i ON (LOWER(TRIM(i.name_en)) = LOWER(TRIM(pl.item_name_en)) OR i.id = pl.item_id)
+SET pl.item_name_ta = i.name_ta;

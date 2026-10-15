@@ -23,8 +23,21 @@
   --color-warning: #f59e0b;
 }
 
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 html, body, #root {
   min-height: 100%;
+  width: 100%;
+  max-width: 100vw;
+  /* Belt-and-suspenders against any element (fixed-width table, long
+     unbroken shop name, a stray px width) pushing the page wider than the
+     viewport — this is what turns "one wide element somewhere" into a
+     horizontal scrollbar for the whole app instead of just clipping that
+     element. The real fix for an overflowing element is still min-width:0
+     on its flex/grid ancestors; this is a safety net, not a substitute. */
+  overflow-x: hidden;
 }
 
 body {

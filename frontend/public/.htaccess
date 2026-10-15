@@ -1,0 +1,25 @@
+# Serve every file as UTF-8, independent of what the hosting panel's
+# default AddDefaultCharset (if any) is set to — this is what actually
+# fixes "Tamil renders as mojibake in production but fine in dev": the Vite
+# dev server always serves UTF-8, but a shared-hosting Apache's default
+# charset can be something else (often ISO-8859-1), and a browser trusts
+# the server's declared charset for *why* it mis-decodes an otherwise
+# perfectly correct UTF-8 response.
+AddDefaultCharset UTF-8
+<IfModule mod_mime.c>
+  AddType 'text/html; charset=UTF-8' html
+  AddType 'application/javascript; charset=UTF-8' js mjs
+  AddType 'text/css; charset=UTF-8' css
+  AddType 'application/manifest+json; charset=UTF-8' webmanifest json
+</IfModule>
+
+# Single-page app: let React Router handle any path that isn't a real file
+# or directory (a hard refresh on /billing, /invoices, etc. must still load
+# index.html, not 404 from Apache).
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>

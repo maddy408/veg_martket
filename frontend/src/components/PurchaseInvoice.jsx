@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatINR, formatDateDMY } from '../utils/format';
+import { formatINR, formatDateDMY, cleanTamilItem } from '../utils/format';
 import { useSettings } from '../hooks/useSettings';
 
 export default function PurchaseInvoice({ purchase, settings = {}, lang = 'ta' }) {
@@ -229,7 +229,7 @@ export default function PurchaseInvoice({ purchase, settings = {}, lang = 'ta' }
                 <tr key={l.id || idx}>
                   <td className="py-1.5 px-2 text-center font-mono text-[11px] border-r border-gray-200">{idx + 1}</td>
                   <td className="py-1.5 px-2 font-bold text-slate-900 border-r border-gray-200">
-                    {l.name_ta || l.item_name_ta || l.name_en || '—'}
+                    {cleanTamilItem(l.name_ta || l.item_name_ta, l.name_en || l.item_name_en)}
                   </td>
                   <td className="py-1.5 px-2 text-center font-mono border-r border-gray-200">
                     {Number(l.nos) > 0 ? Number(l.nos) : ''}

@@ -421,7 +421,15 @@ class BillController
             return null;
         }
 
-        $lines = $this->pdo->prepare('SELECT * FROM bill_lines WHERE bill_id = :id ORDER BY line_order ASC');
+        $lines = $this->pdo->prepare(
+            'SELECT bl.*,
+                    COALESCE(NULLIF(i.name_ta, ""), bl.item_name_ta) AS item_name_ta,
+                    COALESCE(NULLIF(i.name_en, ""), bl.item_name_en) AS item_name_en
+             FROM bill_lines bl
+             LEFT JOIN items i ON (LOWER(TRIM(i.name_en)) = LOWER(TRIM(bl.item_name_en)) OR i.id = bl.item_id)
+             WHERE bl.bill_id = :id
+             ORDER BY bl.line_order ASC'
+        );
         $lines->execute(['id' => $id]);
         $bill['lines'] = $lines->fetchAll();
 

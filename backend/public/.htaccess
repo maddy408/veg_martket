@@ -1,3 +1,11 @@
+# Force UTF-8 on every response from this host, independent of what any
+# individual PHP response (or a PHP fatal-error page that never reaches our
+# own Content-Type header) sends. Belt-and-suspenders alongside
+# Response::json()'s own "charset=utf-8" header.
+AddDefaultCharset UTF-8
+AddType 'text/html; charset=UTF-8' html
+AddType 'application/json; charset=UTF-8' json
+
 RewriteEngine On
 
 # Pass Authorization Header to PHP on Apache / XAMPP

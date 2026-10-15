@@ -67,6 +67,10 @@ export const TAMIL_ITEM_MAP = {
   'raw turmeric': 'மஞ்சள் கிழங்கு',
   'sweet corn': 'சோளம்',
   'green peas': 'பட்டாணி',
+  'nelli': 'நெல்லிக்காய்',
+  'gooseberry': 'நெல்லிக்காய்',
+  'lemon': 'எலுமிச்சை',
+  'lime': 'எலுமிச்சை',
   'lorry freight': 'லாரி வாடகை',
   'cooli': 'கூலி'
 };
@@ -76,7 +80,7 @@ export const TAMIL_ITEM_MAP = {
  */
 export function isMojibake(str) {
   if (!str) return false;
-  return /[\u0370-\u03ff\u1f00-\u1fff«¬»çñúí]/.test(str);
+  return /[\u0370-\u03ff\u1f00-\u1fff«¬»çñúíâ€™Ã]/.test(str) || str.includes('?');
 }
 
 /**
@@ -86,16 +90,19 @@ export function cleanTamilItem(nameTa, nameEn) {
   const en = (nameEn || '').trim();
   const ta = (nameTa || '').trim();
 
-  // If Tamil text is garbled with mojibake Greek characters or question marks
-  if (isMojibake(ta) || !ta || ta.includes('?')) {
-    if (en) {
-      const mapped = TAMIL_ITEM_MAP[en.toLowerCase()];
-      if (mapped) {
-        return `${mapped} / ${en}`;
-      }
-      return en;
+  // If ta has no Tamil characters (U+0B80 to U+0BFF) or has mojibake / question marks
+  const hasTamil = /[\u0B80-\u0BFF]/.test(ta);
+  const isGarbled = isMojibake(ta) || !hasTamil;
+
+  if (isGarbled) {
+    const key = (en || ta).toLowerCase();
+    const mapped = TAMIL_ITEM_MAP[key];
+    const cleanEn = en || (key !== mapped ? ta : '');
+    if (mapped) {
+      return cleanEn ? `${mapped} / ${cleanEn}` : mapped;
     }
-    return ta || '—';
+    if (hasTamil) return ta;
+    return en || ta || '—';
   }
 
   if (en && en.toLowerCase() !== ta.toLowerCase()) {

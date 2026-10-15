@@ -739,8 +739,8 @@ export default function Billing() {
 
           {/* 2. Items Lines Table (Scrollable within container, never scrolls page) */}
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-xs">
-            <div className="overflow-y-auto max-h-[160px] xl:max-h-[220px]">
-              <table className="w-full text-xs border-collapse">
+            <div className="overflow-x-auto overflow-y-auto max-h-[180px] sm:max-h-[220px]">
+              <table className="w-full min-w-[480px] text-xs border-collapse">
                 <thead className="sticky top-0 bg-slate-50 border-b border-gray-200 z-10">
                   <tr className="text-[10.5px] uppercase font-bold text-slate-600">
                     <th className="py-1 px-2 text-left">{t('billing.item')}</th>
@@ -1233,8 +1233,8 @@ export default function Billing() {
           </div>
 
           {/* 4. Bottom Compact Summary Strip */}
-          <div className="bg-slate-900 text-white rounded-md px-4 py-1 flex items-center justify-between text-xs font-medium">
-            <div className="space-x-4">
+          <div className="bg-slate-900 text-white rounded-md px-3 sm:px-4 py-1.5 flex flex-col sm:flex-row gap-1 sm:gap-4 items-start sm:items-center justify-between text-xs font-medium">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
               <span>Total Item Sales: <strong className="text-white font-mono">{formatINR(itemsTotal)}</strong></span>
               {isCommission && (
                 <span>Total Deductions: <strong className="text-amber-300 font-mono">{formatINR(totalDeductions)}</strong></span>

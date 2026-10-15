@@ -15,8 +15,9 @@ frontend/dist/
 dist/
 dist-ssr/
 
-# Logs
+# Logs & Temp
 *.log
+*.timestamp-*.mjs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

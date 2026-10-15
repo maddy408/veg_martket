@@ -30,6 +30,12 @@ Wholesale Vegetable Market Commission Agency & Retail/Bulk POS System built with
    - 40+ pre-seeded Tamil Nadu vegetable commodities with Tamil and English names.
    - Day-wise sales, item-wise sales, party credit statements, and collection audits.
 
+6. **📱 Progressive Web App (PWA) & Mobile WebApp Conversion**
+   - **PWABuilder & Google Play Store (TWA/Bubblewrap) Ready**: Fully validated `manifest.json` with 192x192, 512x512, maskable icons, apple-touch-icon, and screenshots.
+   - **In-App Install Banner & Prompt**: Automatic `beforeinstallprompt` detection with single-click "Install the App / ஆப்பை நிறுவுங்கள்" prompt on Android/Desktop and step-by-step guidance on iOS.
+   - **Offline Support**: Production Service Worker (`service-worker.js` / Workbox) with offline precaching and branded `offline.html` fallback.
+   - **Responsive Mobile View**: Touch-optimized table scrolling, sticky actions, mobile drawer navigation, safe-area inset support.
+
 ---
 
 ## 📁 Repository Structure

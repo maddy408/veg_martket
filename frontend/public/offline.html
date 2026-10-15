@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ta">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ஸ்ரீ பவானி ஆப் — ஆஃப்லைன் (Offline)</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      }
+      body {
+        background: #0a1733;
+        color: #ffffff;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        text-align: center;
+      }
+      .card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+        padding: 32px 24px;
+        max-width: 420px;
+        width: 100%;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      }
+      .icon-box {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 20px;
+        background: rgba(34, 197, 94, 0.15);
+        border: 2px solid #22c55e;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+      }
+      h1 {
+        font-size: 20px;
+        font-weight: 700;
+        color: #22c55e;
+        margin-bottom: 8px;
+      }
+      h2 {
+        font-size: 15px;
+        font-weight: 600;
+        color: #e2e8f0;
+        margin-bottom: 16px;
+      }
+      p {
+        font-size: 13.5px;
+        line-height: 1.6;
+        color: #94a3b8;
+        margin-bottom: 24px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 12px 20px;
+        background: #15803d;
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 600;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+      }
+      .btn:hover {
+        background: #16a34a;
+        transform: translateY(-1px);
+      }
+      .btn-secondary {
+        margin-top: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        color: #cbd5e1;
+      }
+      .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="icon-box">📡</div>
+      <h1>இணைய இணைப்பு இல்லை</h1>
+      <h2>No Internet Connection</h2>
+      <p>
+        ஸ்ரீ பவானி காய்கனி கமிஷன் பில்லிங் ஆப் தற்போது ஆஃப்லைனில் உள்ளது. இணைய இணைப்பு வந்தவுடன் பில்லிங் மற்றும் கணக்குகளை தொடரலாம்.
+      </p>
+      <button class="btn" onclick="window.location.reload()">
+        <span>🔄</span>
+        <span>மீண்டும் முயற்சி செய் (Retry)</span>
+      </button>
+      <a href="/" class="btn btn-secondary">
+        <span>🏠</span>
+        <span>முகப்புக்கு செல் (Home)</span>
+      </a>
+    </div>
+  </body>
+</html>

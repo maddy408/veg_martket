@@ -29,6 +29,7 @@ export default function SurandaiInvoice({ bill, settings = {}, isCommissionView,
   const isCommission = isCommissionView !== undefined 
     ? isCommissionView 
     : bill.bill_type === 'commission';
+  const isTamil = lang === 'ta';
 
   // Parse phone numbers dynamically from settings
   let phones = [];

@@ -32,11 +32,12 @@ export default function PrintBill() {
 
   if (!payload) return <div className="p-8 text-center text-gray-500 font-bold">Loading Invoice...</div>;
 
-  const { bill, settings } = payload;
-  const paperFormat = params.get('format') || settings.default_print_format || 'a5';
+  const bill = payload?.bill || payload;
+  const settings = payload?.settings || {};
+  const paperFormat = params.get('format') || settings?.default_print_format || 'a5';
   const activeIsCommission = formatMode !== null 
     ? formatMode === 'commission' 
-    : bill.bill_type === 'commission';
+    : (bill?.bill_type === 'commission');
 
   return (
     <div className="print-page-wrapper min-h-screen bg-slate-100 pb-12 print:p-0 print:m-0 print:bg-white print:min-h-0">

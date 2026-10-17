@@ -74,4 +74,39 @@ class UserController
 
         Response::json(['ok' => true]);
     }
+
+    public function destroy(string $id): void
+    {
+        $claims = AuthMiddleware::authenticate();
+        AuthMiddleware::requireRole($claims, ['admin']);
+
+        if (isset($claims['uid']) && (int) $claims['uid'] === (int) $id) {
+            Response::error('You cannot delete your own logged-in account', 400);
+            return;
+        }
+
+        if ((int) $id === 1) {
+            Response::error('Primary admin account cannot be deleted', 400);
+            return;
+        }
+
+        $stmt = $this->pdo->prepare('SELECT id, username FROM users WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+        $user = $stmt->fetch();
+
+        if (!$user) {
+            Response::error('User not found', 404);
+            return;
+        }
+
+        if (strtolower((string) $user['username']) === 'admin') {
+            Response::error('Primary admin account cannot be deleted', 400);
+            return;
+        }
+
+        $deleteStmt = $this->pdo->prepare('DELETE FROM users WHERE id = :id');
+        $deleteStmt->execute(['id' => $id]);
+
+        Response::json(['ok' => true]);
+    }
 }

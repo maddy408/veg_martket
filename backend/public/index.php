@@ -114,6 +114,7 @@ $users = new UserController($pdo);
 $router->get('/api/users', fn () => $users->index());
 $router->post('/api/users', fn () => $users->store());
 $router->put('/api/users/{id}', fn ($id) => $users->update($id));
+$router->delete('/api/users/{id}', fn ($id) => $users->destroy($id));
 
 $audit = new AuditLogController($pdo);
 $router->get('/api/audit-log', fn () => $audit->index());

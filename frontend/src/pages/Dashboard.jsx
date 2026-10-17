@@ -1,10 +1,20 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { dashboardSummary } from '../api/reports';
-import { formatINR, formatDateDMY, cleanTamilItem } from '../utils/format';
+import { formatINR, formatDateDMY } from '../utils/format';
 
 function formatItemName(it) {
-  return cleanTamilItem(it.item_name_ta, it.item_name_en);
+  const ta = it.item_name_ta?.trim();
+  const en = it.item_name_en?.trim();
+  const isGarbled = !ta || ta.includes('?');
+
+  if (isGarbled) {
+    return en || ta || '—';
+  }
+  if (en && en.toLowerCase() !== ta.toLowerCase()) {
+    return `${ta} / ${en}`;
+  }
+  return ta;
 }
 
 function getSmoothBezierPath(pts) {
@@ -148,11 +158,11 @@ export default function Dashboard() {
     : chartMetrics?.highestPoint;
 
   return (
-    <div className="space-y-6 w-full max-w-full px-1 sm:px-3 lg:px-4">
+    <div className="space-y-6 w-full max-w-full px-1 sm:px-3 lg:px-4 pb-10">
       {/* 4 Top KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Today's Sales */}
-        <div className="min-w-0 bg-white rounded-xl shadow-sm border border-gray-200 border-t-4 border-t-emerald-500 p-4 transition-all hover:shadow-md">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 border-t-4 border-t-emerald-500 p-4 transition-all hover:shadow-md">
           <div className="text-sm font-medium text-gray-600 mb-1">{t('dashboard.today_sales')}</div>
           <div className="text-3xl font-extrabold text-gray-900 tracking-tight">{formatINR(todaySales)}</div>
           <div className="mt-2 flex items-center text-xs font-semibold">
@@ -169,7 +179,7 @@ export default function Dashboard() {
         </div>
 
         {/* Card 2: Today's Collection */}
-        <div className="min-w-0 bg-white rounded-xl shadow-sm border border-gray-200 border-t-4 border-t-sky-400 p-4 transition-all hover:shadow-md">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 border-t-4 border-t-sky-400 p-4 transition-all hover:shadow-md">
           <div className="text-sm font-medium text-gray-600 mb-1">{t('dashboard.today_collection')}</div>
           <div className="text-3xl font-extrabold text-gray-900 tracking-tight">{formatINR(todayCollection)}</div>
           <div className="mt-2 flex items-center text-xs font-semibold">
@@ -186,7 +196,7 @@ export default function Dashboard() {
         </div>
 
         {/* Card 3: Total Receivable */}
-        <div className="min-w-0 bg-white rounded-xl shadow-sm border border-gray-200 border-t-4 border-t-blue-600 p-4 transition-all hover:shadow-md">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 border-t-4 border-t-blue-600 p-4 transition-all hover:shadow-md">
           <div className="text-sm font-medium text-gray-600 mb-1">{t('dashboard.total_receivable')}</div>
           <div className="text-3xl font-extrabold text-gray-900 tracking-tight">{formatINR(data.total_receivable)}</div>
           <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-500 font-medium">
@@ -198,7 +208,7 @@ export default function Dashboard() {
         </div>
 
         {/* Card 4: Total Payable */}
-        <div className="min-w-0 bg-white rounded-xl shadow-sm border border-gray-200 border-t-4 border-t-rose-500 p-4 transition-all hover:shadow-md">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 border-t-4 border-t-rose-500 p-4 transition-all hover:shadow-md">
           <div className="text-sm font-medium text-gray-600 mb-1">{t('dashboard.total_payable')}</div>
           <div className="text-3xl font-extrabold text-gray-900 tracking-tight">{formatINR(data.total_payable)}</div>
           <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-500 font-medium">
@@ -213,7 +223,7 @@ export default function Dashboard() {
       {/* Main 2-Column Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         {/* Left Column: Last 7 Days Sales */}
-        <div className="min-w-0 bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col justify-between">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-2">
               <h2 className="text-xl font-bold text-gray-900">{t('dashboard.last_7_days')}</h2>
@@ -389,7 +399,7 @@ export default function Dashboard() {
         </div>
 
         {/* Right Column: Top Items This Month */}
-        <div className="min-w-0 bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
           <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-3">
             <h2 className="text-xl font-bold text-gray-900">{t('dashboard.top_items_month')}</h2>
             <div className="relative">

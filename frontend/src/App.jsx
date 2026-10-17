@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth.jsx';
 import { SettingsProvider } from './hooks/useSettings.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
-import PWAInstallBanner from './components/PWAInstallBanner.jsx';
 import Login from './pages/Login.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Billing from './pages/Billing.jsx';
@@ -14,19 +13,15 @@ import Invoices from './pages/Invoices.jsx';
 import Reports from './pages/Reports.jsx';
 import Settings from './pages/Settings.jsx';
 import PrintBill from './print/PrintBill.jsx';
-import PrintPayment from './print/PrintPayment.jsx';
-import PrintPurchase from './print/PrintPurchase.jsx';
 
 export default function App() {
   return (
     <AuthProvider>
       <SettingsProvider>
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/print/bill/:id" element={<PrintBill />} />
-            <Route path="/print/payment/:id" element={<PrintPayment />} />
-            <Route path="/print/purchase/:id" element={<PrintPurchase />} />
 
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/billing" element={<ProtectedRoute><Billing /></ProtectedRoute>} />
@@ -40,7 +35,6 @@ export default function App() {
             <Route path="/settings" element={<ProtectedRoute adminOnly><Settings /></ProtectedRoute>} />
             <Route path="/users" element={<ProtectedRoute adminOnly><Navigate to="/settings?tab=users" replace /></ProtectedRoute>} />
           </Routes>
-          <PWAInstallBanner />
         </BrowserRouter>
       </SettingsProvider>
     </AuthProvider>

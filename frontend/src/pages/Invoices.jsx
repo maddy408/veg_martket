@@ -7,12 +7,16 @@ import { listPaymentMethods } from '../api/payments';
 import { useAuth } from '../hooks/useAuth.jsx';
 import { formatINR, formatDateDMY, todayISO } from '../utils/format';
 import SurandaiInvoice from '../components/SurandaiInvoice';
+import Pagination from '../components/Pagination';
 
 export default function Invoices() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [bills, setBills] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({ from: '', to: '', bill_no: '', location_type: '', bill_type: '', payment_status: '' });
   const [editing, setEditing] = useState(null);
   const [previewPayload, setPreviewPayload] = useState(null);
@@ -23,15 +27,30 @@ export default function Invoices() {
   useEffect(() => {
     listItems({ active_only: '1' }).then(setItems);
     listPaymentMethods().then(setMethods);
-    load();
+    load(1);
   }, []);
 
-  function load() {
-    const params = {};
+  function load(p = page) {
+    setLoading(true);
+    const params = { page: p, limit: 10 };
     Object.entries(filters).forEach(([k, v]) => {
       if (v) params[k] = v;
     });
-    listBills(params).then(setBills);
+    listBills(params)
+      .then((res) => {
+        if (res && res.data) {
+          setBills(res.data);
+          setTotal(res.total);
+          setPage(res.page);
+        } else if (Array.isArray(res)) {
+          setBills(res);
+          setTotal(res.length);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load bills:', err);
+      })
+      .finally(() => setLoading(false));
   }
 
   async function openEdit(id) {
@@ -58,6 +77,71 @@ export default function Invoices() {
   }
   function removeLine(key) {
     setEditing((e) => ({ ...e, lines: e.lines.filter((l) => l.key !== key) }));
+  }
+
+  function handleEditNosChange(key, newNosVal) {
+    if (newNosVal !== '' && !/^\d*$/.test(newNosVal)) return;
+
+    setEditing((prev) => ({
+      ...prev,
+      lines: prev.lines.map((l) => {
+        if (l.key !== key) return l;
+        if (l.is_charge_item) {
+          return { ...l, nos: newNosVal };
+        }
+        const bagCount = parseInt(newNosVal, 10);
+        const targetCount = !isNaN(bagCount) && bagCount > 0 ? bagCount : 1;
+        const currentWeights = Array.isArray(l.bag_weights) && l.bag_weights.length > 0
+          ? [...l.bag_weights]
+          : [l.weight || ''];
+
+        const newWeights = [];
+        for (let i = 0; i < targetCount; i++) {
+          newWeights.push(i < currentWeights.length ? currentWeights[i] : '');
+        }
+
+        const totalWeight = newWeights.reduce((sum, w) => sum + (parseFloat(w) || 0), 0);
+        const roundedWeight = Math.round(totalWeight * 1000) / 1000;
+
+        return {
+          ...l,
+          nos: newNosVal,
+          bag_count: !isNaN(bagCount) && bagCount > 0 ? bagCount : null,
+          bag_weights: newWeights,
+          weight: roundedWeight > 0 ? roundedWeight : (newWeights.every((w) => w === '' || w === 0) ? '' : roundedWeight),
+        };
+      }),
+    }));
+  }
+
+  function handleEditBagWeightChange(key, bagIdx, newWeightVal) {
+    if (newWeightVal !== '' && !/^\d*\.?\d*$/.test(newWeightVal)) return;
+
+    setEditing((prev) => ({
+      ...prev,
+      lines: prev.lines.map((l) => {
+        if (l.key !== key) return l;
+        const bagCount = parseInt(l.nos, 10);
+        const targetCount = !isNaN(bagCount) && bagCount > 0 ? bagCount : 1;
+        const currentWeights = Array.isArray(l.bag_weights) && l.bag_weights.length > 0
+          ? [...l.bag_weights]
+          : [l.weight || ''];
+
+        while (currentWeights.length < targetCount) {
+          currentWeights.push('');
+        }
+        currentWeights[bagIdx] = newWeightVal;
+
+        const totalWeight = currentWeights.reduce((sum, w) => sum + (parseFloat(w) || 0), 0);
+        const roundedWeight = Math.round(totalWeight * 1000) / 1000;
+
+        return {
+          ...l,
+          bag_weights: currentWeights,
+          weight: roundedWeight > 0 ? roundedWeight : (currentWeights.every((w) => w === '' || w === 0) ? '' : roundedWeight),
+        };
+      }),
+    }));
   }
 
   function editTotals() {
@@ -99,6 +183,7 @@ export default function Invoices() {
         rate: Number(l.rate),
         nos: Number(l.nos) || 0,
         bag_count: l.nos !== '' && l.nos !== null && l.nos !== undefined ? Number(l.nos) : null,
+        bag_weights: l.bag_weights || null,
         weight: Number(l.weight),
       })),
       paid_amount: Number(editing.paid_amount) || 0,
@@ -157,12 +242,13 @@ export default function Invoices() {
           <option value="partial">Partial</option>
           <option value="unpaid">Unpaid</option>
         </select>
-        <button className="btn-primary col-span-full md:col-span-1" onClick={load}>
+        <button className="btn-primary col-span-full md:col-span-1" onClick={() => { setPage(1); load(1); }}>
           {t('common.search')}
         </button>
       </div>
 
-      <div className="card overflow-x-auto">
+      <div className="card overflow-hidden p-0">
+        <div className="overflow-x-auto">
         <table className="data-table">
           <thead>
             <tr>
@@ -257,11 +343,23 @@ export default function Invoices() {
             )}
           </tbody>
         </table>
+        </div>
+
+        <Pagination
+          page={page}
+          total={total}
+          limit={10}
+          onPageChange={(p) => {
+            setPage(p);
+            load(p);
+          }}
+          label={t('nav.invoices')}
+        />
       </div>
 
       {editing && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 no-print p-4">
-          <div className="card w-full max-w-3xl max-h-[85vh] overflow-y-auto space-y-3">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 no-print p-4 overflow-y-auto">
+          <div className="card w-full max-w-3xl max-h-[90vh] my-auto overflow-y-auto space-y-3 shadow-2xl">
             <div className="flex justify-between items-center">
               <h2 className="font-bold text-lg">{t('common.edit')} — {editing.bill_no}</h2>
               <button className="btn-secondary" onClick={() => setEditing(null)}>
@@ -281,32 +379,66 @@ export default function Invoices() {
                 </tr>
               </thead>
               <tbody>
-                {editing.lines.map((l) => (
-                  <tr key={l.key}>
-                    <td>{l.item_name_ta}</td>
-                    <td>
-                      <input className="input w-20" type="number" value={l.rate} onChange={(e) => updateLine(l.key, 'rate', e.target.value)} />
-                    </td>
-                    <td>
-                      <input className="input w-16" type="number" value={l.nos === 0 || l.nos === '0' ? '' : (l.nos ?? '')} onChange={(e) => updateLine(l.key, 'nos', e.target.value)} />
-                    </td>
-                    <td>
-                      <input className="input w-20" type="number" value={l.weight} onChange={(e) => updateLine(l.key, 'weight', e.target.value)} />
-                    </td>
-                    <td>
-                      <button
-                        className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors inline-flex items-center justify-center"
-                        onClick={() => removeLine(l.key)}
-                        title={t('common.delete')}
-                        type="button"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {editing.lines.map((l) => {
+                  const bagCount = parseInt(l.nos, 10);
+                  const count = (!isNaN(bagCount) && bagCount > 0) ? bagCount : (Array.isArray(l.bag_weights) && l.bag_weights.length > 0 ? l.bag_weights.length : 1);
+                  const weights = [];
+                  for (let i = 0; i < count; i++) {
+                    weights.push(
+                      l.bag_weights && l.bag_weights[i] !== undefined
+                        ? l.bag_weights[i]
+                        : (i === 0 ? (l.weight ?? '') : '')
+                    );
+                  }
+
+                  return (
+                    <tr key={l.key}>
+                      <td>{l.item_name_ta}</td>
+                      <td>
+                        <input className="input w-20" type="number" value={l.rate} onChange={(e) => updateLine(l.key, 'rate', e.target.value)} />
+                      </td>
+                      <td>
+                        <input className="input w-16" type="text" inputMode="numeric" value={l.nos === 0 || l.nos === '0' ? '' : (l.nos ?? '')} onChange={(e) => handleEditNosChange(l.key, e.target.value)} />
+                      </td>
+                      <td>
+                        {l.is_charge_item ? (
+                          <span className="text-gray-400">—</span>
+                        ) : count > 1 ? (
+                          <div className="flex flex-wrap items-center gap-1">
+                            {weights.map((wVal, bagIdx) => (
+                              <div key={bagIdx} className="flex items-center gap-0.5">
+                                <input
+                                  className="input w-14 text-xs font-mono"
+                                  type="text"
+                                  inputMode="decimal"
+                                  placeholder={`P${bagIdx + 1}`}
+                                  value={wVal ?? ''}
+                                  onChange={(e) => handleEditBagWeightChange(l.key, bagIdx, e.target.value)}
+                                />
+                                {bagIdx < count - 1 && <span className="font-bold text-gray-400">+</span>}
+                              </div>
+                            ))}
+                            <span className="text-xs font-mono font-bold text-emerald-700 ml-1">={l.weight || 0} kg</span>
+                          </div>
+                        ) : (
+                          <input className="input w-20" type="text" inputMode="decimal" value={weights[0] ?? ''} onChange={(e) => handleEditBagWeightChange(l.key, 0, e.target.value)} />
+                        )}
+                      </td>
+                      <td>
+                        <button
+                          className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors inline-flex items-center justify-center"
+                          onClick={() => removeLine(l.key)}
+                          title={t('common.delete')}
+                          type="button"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
 

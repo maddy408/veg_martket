@@ -12,7 +12,6 @@
     "reports": "Reports",
     "settings": "Settings",
     "users": "Users",
-    "install_app": "Install App",
     "logout": "Logout"
   },
   "common": {
@@ -49,8 +48,8 @@
     "tamil": "தமிழ்"
   },
   "billing": {
-    "location_local": "Surandai",
-    "location_distant": "Kerala",
+    "location_local": "Local",
+    "location_distant": "Distant",
     "type_normal": "Normal Bill",
     "type_commission": "Commission Bill",
     "select_party": "Select party",

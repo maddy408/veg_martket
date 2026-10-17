@@ -1,17 +1,17 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { listParties, getUnpaidDocuments } from '../api/parties';
 import { listPaymentMethods, createPayment, listPayments } from '../api/payments';
 import { formatINR, formatDateDMY, todayISO } from '../utils/format';
+import Pagination from '../components/Pagination';
 
 export default function Payments() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [parties, setParties] = useState([]);
   const [methods, setMethods] = useState([]);
   const [history, setHistory] = useState([]);
-  const [historyFilter, setHistoryFilter] = useState('all'); // 'all' | 'in' | 'out'
+  const [totalHistory, setTotalHistory] = useState(0);
+  const [historyPage, setHistoryPage] = useState(1);
   const [direction, setDirection] = useState('in');
   const [partyId, setPartyId] = useState('');
   const [amount, setAmount] = useState('');
@@ -26,19 +26,27 @@ export default function Payments() {
   useEffect(() => {
     listParties().then(setParties);
     listPaymentMethods().then(setMethods);
+    loadHistory();
   }, []);
 
-  function loadHistory(filt = historyFilter) {
-    const params = {};
-    if (filt && filt !== 'all') {
-      params.direction = filt;
-    }
-    listPayments(params).then(setHistory);
+  function loadHistory(p = historyPage) {
+    listPayments({ direction, page: p, limit: 10 }).then((res) => {
+      if (res && res.data) {
+        setHistory(res.data);
+        setTotalHistory(res.total);
+        setHistoryPage(res.page);
+      } else if (Array.isArray(res)) {
+        setHistory(res);
+        setTotalHistory(res.length);
+      }
+    });
   }
 
   useEffect(() => {
-    loadHistory(historyFilter);
-  }, [historyFilter]);
+    setHistoryPage(1);
+    loadHistory(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [direction]);
 
   useEffect(() => {
     if (!partyId) {
@@ -92,13 +100,11 @@ export default function Payments() {
         }));
       }
       const res = await createPayment(payload);
+      alert(`Saved: ${res.receipt_no}`);
       setAmount('');
       setPartyId('');
       setNotes('');
-      loadHistory(historyFilter);
-      if (res?.id) {
-        navigate(`/print/payment/${res.id}`);
-      }
+      loadHistory();
     } catch (err) {
       alert(err?.response?.data?.error || 'Failed');
     } finally {
@@ -230,107 +236,53 @@ export default function Payments() {
         </button>
       </div>
 
-      <div className="card space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-gray-100">
-          <h3 className="font-bold text-gray-800 text-base">{t('payments.receipt')} வரலாறு (History)</h3>
-          
-          {/* Section Filter for In/Out */}
-          <div className="inline-flex p-0.5 bg-gray-100 rounded-lg border border-gray-200 text-xs">
-            <button
-              type="button"
-              className={`px-3 py-1 rounded-md font-bold transition-all ${
-                historyFilter === 'all'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-              onClick={() => setHistoryFilter('all')}
-            >
-              அனைத்தும் (All)
-            </button>
-            <button
-              type="button"
-              className={`px-3 py-1 rounded-md font-bold transition-all flex items-center gap-1 ${
-                historyFilter === 'in'
-                  ? 'bg-emerald-700 text-white shadow-xs'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-              onClick={() => setHistoryFilter('in')}
-            >
-              <span>📥</span>
-              <span>உள்ளே வருவது (வரவு)</span>
-            </button>
-            <button
-              type="button"
-              className={`px-3 py-1 rounded-md font-bold transition-all flex items-center gap-1 ${
-                historyFilter === 'out'
-                  ? 'bg-rose-700 text-white shadow-xs'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-              onClick={() => setHistoryFilter('out')}
-            >
-              <span>📤</span>
-              <span>வெளியே போவது (பற்று)</span>
-            </button>
-          </div>
+      <div className="card overflow-hidden p-0">
+        <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+          <h3 className="font-semibold text-sm text-slate-800">{t('payments.receipt')} History</h3>
+          <span className="text-xs font-bold text-gray-500">{totalHistory} records</span>
         </div>
-
         <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
               <tr>
                 <th>{t('payments.receipt')}</th>
-                <th>வகை (Direction)</th>
                 <th>{t('common.date')}</th>
                 <th>{t('common.party')}</th>
                 <th>{t('common.amount')}</th>
                 <th>{t('common.method')}</th>
-                <th className="text-center">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
-              {history.map((h) => {
-                const isIn = h.direction === 'in';
-                return (
-                  <tr key={h.id}>
-                    <td className="font-mono font-bold text-slate-800">{h.receipt_no}</td>
-                    <td>
-                      <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-bold ${
-                        isIn ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
-                      }`}>
-                        {isIn ? 'உள்ளே (வரவு)' : 'வெளியே (பற்று)'}
-                      </span>
-                    </td>
-                    <td>{formatDateDMY(h.payment_date)}</td>
-                    <td className="font-bold text-gray-900">{h.party_name}</td>
-                    <td className={`font-mono font-bold ${isIn ? 'text-emerald-700' : 'text-rose-700'}`}>
-                      {formatINR(h.amount)}
-                    </td>
-                    <td>{h.payment_method_name}</td>
-                    <td className="text-center whitespace-nowrap py-2 px-3">
-                      <button
-                        className="p-1.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors inline-flex items-center justify-center"
-                        onClick={() => navigate(`/print/payment/${h.id}`)}
-                        title="ரசீது அச்சிடு (Print Receipt)"
-                        type="button"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 002-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                        </svg>
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
+              {history.map((h) => (
+                <tr key={h.id}>
+                  <td className="font-mono font-bold text-blue-900">{h.receipt_no}</td>
+                  <td>{formatDateDMY(h.payment_date)}</td>
+                  <td className="font-semibold">{h.party_name}</td>
+                  <td className="font-mono font-bold">{formatINR(h.amount)}</td>
+                  <td>{h.payment_method_name}</td>
+                </tr>
+              ))}
               {history.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="text-center text-gray-400 py-4">
-                    — பதிவுகள் எதுவும் இல்லை —
+                  <td colSpan={5} className="py-6 text-center text-gray-400">
+                    No payment records found
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+
+        <Pagination
+          page={historyPage}
+          total={totalHistory}
+          limit={10}
+          onPageChange={(p) => {
+            setHistoryPage(p);
+            loadHistory(p);
+          }}
+          label={t('payments.receipt')}
+        />
       </div>
     </div>
   );

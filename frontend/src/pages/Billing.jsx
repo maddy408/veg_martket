@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { listItems } from '../api/items';
@@ -45,69 +45,95 @@ export default function Billing() {
   const [heldOpen, setHeldOpen] = useState(false);
   const [heldBills, setHeldBills] = useState([]);
   const [saving, setSaving] = useState(false);
+
   const codeRef = useRef(null);
-  const [partySearch, setPartySearch] = useState('');
-  const [partyDropdownOpen, setPartyDropdownOpen] = useState(false);
-  const [highlightedPartyIndex, setHighlightedPartyIndex] = useState(0);
-  const partyDropdownRef = useRef(null);
-  const partyInputRef = useRef(null);
-  const walkinInputRef = useRef(null);
-  const partyListRef = useRef(null);
-  const inputRefs = useRef({});
+  const partyRef = useRef(null);
+  const walkinRef = useRef(null);
+  const dateRef = useRef(null);
+  const billTypeRef = useRef(null);
+  const locationRef = useRef(null);
+  const discountPercentRef = useRef(null);
+  const discountAmountRef = useRef(null);
+  const commissionInputRef = useRef(null);
+  const patthuRef = useRef(null);
+  const cooliRef = useRef(null);
+  const vadagaiRef = useRef(null);
+  const otherDeductionRef = useRef(null);
+  const paidAmountRef = useRef(null);
+  const paymentMethodRef = useRef(null);
+  const notesRef = useRef(null);
+  const holdBtnRef = useRef(null);
+  const saveBtnRef = useRef(null);
+  const savePrintBtnRef = useRef(null);
   const pendingFocusRef = useRef(null);
 
-  const isCommission = cart.billType === 'commission';
-
-  const filteredParties = useMemo(() => {
-    const q = partySearch.trim().toLowerCase();
-    const matches = parties.filter((p) => {
-      if (isCommission && p.type === 'customer') return false;
-      if (!q) return true;
-      return (
-        p.name?.toLowerCase().includes(q) ||
-        p.phone?.toLowerCase().includes(q) ||
-        p.place?.toLowerCase().includes(q)
-      );
-    });
-
-    const isSearchingWalkin = q && ('walk-in'.includes(q) || 'walkin'.includes(q) || 'நடப்பு'.includes(q) || 'வாடிக்கையாளர்'.includes(q));
-    if (!q || isSearchingWalkin) {
-      return [{ id: '', name: `${t('common.walkin')} (Walk-in)`, isWalkin: true }, ...matches];
-    }
-    return matches;
-  }, [partySearch, parties, isCommission, t]);
-
-  useEffect(() => {
-    setHighlightedPartyIndex(0);
-  }, [partySearch]);
-
-  useEffect(() => {
-    if (partyDropdownOpen && partyListRef.current) {
-      const el = partyListRef.current.querySelector(`[data-index="${highlightedPartyIndex}"]`);
-      if (el) {
-        el.scrollIntoView({ block: 'nearest' });
+  function focusTableCell(row, col, subIdx = 0) {
+    let el = null;
+    if (col === 2) {
+      el = document.querySelector(`[data-row="${row}"][data-col="2"][data-sub="${subIdx}"]`);
+      if (!el) {
+        const allBagInputs = document.querySelectorAll(`[data-row="${row}"][data-col="2"]`);
+        if (allBagInputs.length > 0) {
+          el = allBagInputs[Math.min(subIdx, allBagInputs.length - 1)];
+        }
       }
-    }
-  }, [highlightedPartyIndex, partyDropdownOpen]);
-
-  useEffect(() => {
-    if (cart.partyId) {
-      const p = parties.find((x) => x.id === Number(cart.partyId) || x.id === cart.partyId);
-      if (p) setPartySearch(p.name);
     } else {
-      setPartySearch('');
+      el = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
     }
-  }, [cart.partyId, parties]);
+    if (el && el.disabled) {
+      el = document.querySelector(`[data-row="${row}"][data-col="1"]`) || document.querySelector(`[data-row="${row}"][data-col="0"]`);
+    }
+    if (el) {
+      el.focus();
+      if (el.select) el.select();
+    }
+  }
 
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (partyDropdownRef.current && !partyDropdownRef.current.contains(event.target)) {
-        setPartyDropdownOpen(false);
-      }
+  function focusCodeInput() {
+    if (codeRef.current) {
+      codeRef.current.focus();
+      codeRef.current.select();
     }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }
+
+  function isAtStart(el) {
+    if (!el) return true;
+    try {
+      if (el.selectionStart !== undefined && el.selectionEnd !== undefined) {
+        return el.selectionStart === 0 && (el.selectionEnd === 0 || el.selectionEnd === (el.value || '').length);
+      }
+    } catch {
+      return true;
+    }
+    return true;
+  }
+
+  function isAtEnd(el) {
+    if (!el) return true;
+    try {
+      if (el.selectionStart !== undefined && el.selectionEnd !== undefined) {
+        const len = (el.value || '').length;
+        return (el.selectionStart === len && el.selectionEnd === len) || (el.selectionStart === 0 && el.selectionEnd === len);
+      }
+    } catch {
+      return true;
+    }
+    return true;
+  }
+
+  function shouldBackspaceNavigate(el) {
+    if (!el) return true;
+    const val = el.value ?? '';
+    if (val === '' || val === 0 || val === '0') return true;
+    try {
+      if (el.selectionStart !== undefined && el.selectionEnd !== undefined) {
+        return el.selectionStart === 0 && el.selectionEnd === 0;
+      }
+    } catch {
+      return false;
+    }
+    return false;
+  }
 
   useEffect(() => {
     listItems({ active_only: '1' }).then(setItems);
@@ -117,7 +143,34 @@ export default function Billing() {
       const def = m.find((x) => x.is_default) || m[0];
       if (def) setCart((c) => ({ ...c, paymentMethodId: def.id }));
     });
+    setTimeout(() => codeRef.current?.focus(), 100);
   }, []);
+
+  useEffect(() => {
+    if (pendingFocusRef.current) {
+      const { row, field, subIdx = 0, select } = pendingFocusRef.current;
+      const timer = setTimeout(() => {
+        let el = null;
+        if (field === 'weight') {
+          el = document.querySelector(`[data-row="${row}"][data-col="2"][data-sub="${subIdx}"]`);
+          if (!el) {
+            const allBagInputs = document.querySelectorAll(`[data-row="${row}"][data-col="2"]`);
+            if (allBagInputs.length > 0) {
+              el = allBagInputs[Math.min(subIdx, allBagInputs.length - 1)];
+            }
+          }
+        } else {
+          el = document.querySelector(`[data-row="${row}"][data-field="${field}"]`);
+        }
+        if (el) {
+          el.focus();
+          if (select && el.select) el.select();
+        }
+        pendingFocusRef.current = null;
+      }, 40);
+      return () => clearTimeout(timer);
+    }
+  }, [cart.lines]);
 
   useEffect(() => {
     if (!cart.partyId) {
@@ -127,45 +180,6 @@ export default function Billing() {
     getParty(cart.partyId).then((p) => setPreviousBalance(Number(p.balance || 0)));
   }, [cart.partyId]);
 
-  // Focus newly added / updated vegetable row input immediately
-  useEffect(() => {
-    if (pendingFocusRef.current) {
-      const { key, field } = pendingFocusRef.current;
-      pendingFocusRef.current = null;
-      requestAnimationFrame(() => {
-        const target =
-          inputRefs.current[`${key}_${field}`] ||
-          inputRefs.current[`${key}_rate`] ||
-          inputRefs.current[`${key}_weight`] ||
-          inputRefs.current[`${key}_nos`];
-        if (target) {
-          target.focus();
-          target.select?.();
-        }
-      });
-    }
-  }, [cart.lines]);
-
-  function handleSelectParty(p) {
-    if (!p || p.isWalkin || !p.id) {
-      setCart((c) => ({ ...c, partyId: '', walkinName: '' }));
-      setPartySearch('');
-      setPartyDropdownOpen(false);
-      setTimeout(() => {
-        walkinInputRef.current?.focus();
-        walkinInputRef.current?.select?.();
-      }, 50);
-    } else {
-      setCart((c) => ({ ...c, partyId: p.id, walkinName: '' }));
-      setPartySearch(p.name);
-      setPartyDropdownOpen(false);
-      setTimeout(() => {
-        codeRef.current?.focus();
-        codeRef.current?.select?.();
-      }, 50);
-    }
-  }
-
   function addItemByCode(rawInput) {
     if (!rawInput || !rawInput.trim()) return;
     const trimmed = rawInput.trim();
@@ -173,9 +187,9 @@ export default function Billing() {
     let parsedCode = trimmed;
     let customQty = null;
 
-    // Check for patterns like "L 1.5" or "L*1.5" or "1.5 L" or "1.5*L"
-    const suffixMatch = trimmed.match(/^([a-zA-Z0-9]+)[\s*xX]+([0-9]+(?:\.[0-9]+)?)$/);
-    const prefixMatch = trimmed.match(/^([0-9]+(?:\.[0-9]+)?)[\s*xX]+([a-zA-Z0-9]+)$/);
+    // Check for patterns like "L 1.5" or "L*1.5" or "1.5 L" or "1.5*L" or "P.BOX 2"
+    const suffixMatch = trimmed.match(/^([a-zA-Z0-9.]+)[\s*xX]+([0-9]+(?:\.[0-9]+)?)$/);
+    const prefixMatch = trimmed.match(/^([0-9]+(?:\.[0-9]+)?)[\s*xX]+([a-zA-Z0-9.]+)$/);
 
     if (suffixMatch) {
       parsedCode = suffixMatch[1];
@@ -185,19 +199,28 @@ export default function Billing() {
       parsedCode = prefixMatch[2];
     }
 
-    const match = items.find((i) => i.code.toLowerCase() === parsedCode.toLowerCase());
+    const raw = parsedCode.trim().toLowerCase();
+    const clean = raw.replace(/[^a-z0-9]/g, '');
+    const match = items.find((i) => {
+      const icode = (i.code || '').toLowerCase();
+      return icode === raw || icode.replace(/[^a-z0-9]/g, '') === clean;
+    });
     if (!match) return;
 
-    const targetField = match.is_charge_item ? 'nos' : 'rate';
+    const existingIdx = cart.lines.findIndex((l) => l.item_id === match.id);
+    const targetRow = existingIdx >= 0 ? existingIdx : cart.lines.length;
+    pendingFocusRef.current = {
+      row: targetRow,
+      field: match.is_charge_item ? 'nos' : 'weight',
+      subIdx: 0,
+      select: true,
+    };
 
     setCart((c) => {
-      const existingIdx = c.lines.findIndex((l) => l.item_id === match.id);
-
       if (existingIdx >= 0) {
         // Item already in cart: increment quantity, do NOT add duplicate line
         const updatedLines = [...c.lines];
         const existing = updatedLines[existingIdx];
-        pendingFocusRef.current = { key: existing.key, field: targetField };
         const addQty = customQty !== null && customQty > 0 ? customQty : 1;
 
         if (existing.is_charge_item) {
@@ -209,9 +232,16 @@ export default function Billing() {
         } else {
           const curWeight = parseFloat(existing.weight) || 0;
           const newWeight = curWeight <= 0 ? addQty : Math.round((curWeight + addQty) * 1000) / 1000;
+          const currentBags = Array.isArray(existing.bag_weights) && existing.bag_weights.length > 0
+            ? [...existing.bag_weights]
+            : [existing.weight || addQty];
+          if (currentBags.length === 1) {
+            currentBags[0] = newWeight;
+          }
           updatedLines[existingIdx] = {
             ...existing,
             weight: newWeight,
+            bag_weights: currentBags,
           };
         }
 
@@ -220,15 +250,12 @@ export default function Billing() {
 
       // First time adding this item: default quantity = 1 (or customQty if provided)
       const initialQty = customQty !== null && customQty > 0 ? customQty : 1;
-      const newKey = `line_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-      pendingFocusRef.current = { key: newKey, field: targetField };
-
       return {
         ...c,
         lines: [
           ...c.lines,
           {
-            key: newKey,
+            key: Date.now() + Math.random(),
             item_id: match.id,
             item_name_ta: match.name_ta,
             item_name_en: match.name_en,
@@ -238,12 +265,78 @@ export default function Billing() {
             nos: match.is_charge_item ? initialQty : '',
             bag_count: '',
             weight: match.is_charge_item ? 0 : initialQty,
+            bag_weights: match.is_charge_item ? [] : [initialQty],
           },
         ],
       };
     });
 
     setCodeInput('');
+  }
+
+  function handleNosChange(key, newNosVal) {
+    if (newNosVal !== '' && !/^\d*$/.test(newNosVal)) return;
+
+    setCart((c) => ({
+      ...c,
+      lines: c.lines.map((l) => {
+        if (l.key !== key) return l;
+        if (l.is_charge_item) {
+          return { ...l, nos: newNosVal };
+        }
+        const bagCount = parseInt(newNosVal, 10);
+        const targetCount = !isNaN(bagCount) && bagCount > 0 ? bagCount : 1;
+        const currentWeights = Array.isArray(l.bag_weights) && l.bag_weights.length > 0
+          ? [...l.bag_weights]
+          : [l.weight || ''];
+
+        const newWeights = [];
+        for (let i = 0; i < targetCount; i++) {
+          newWeights.push(i < currentWeights.length ? currentWeights[i] : '');
+        }
+
+        const totalWeight = newWeights.reduce((sum, w) => sum + (parseFloat(w) || 0), 0);
+        const roundedWeight = Math.round(totalWeight * 1000) / 1000;
+
+        return {
+          ...l,
+          nos: newNosVal,
+          bag_count: !isNaN(bagCount) && bagCount > 0 ? bagCount : null,
+          bag_weights: newWeights,
+          weight: roundedWeight > 0 ? roundedWeight : (newWeights.every((w) => w === '' || w === 0) ? '' : roundedWeight),
+        };
+      }),
+    }));
+  }
+
+  function handleBagWeightChange(key, bagIdx, newWeightVal) {
+    if (newWeightVal !== '' && !/^\d*\.?\d*$/.test(newWeightVal)) return;
+
+    setCart((c) => ({
+      ...c,
+      lines: c.lines.map((l) => {
+        if (l.key !== key) return l;
+        const bagCount = parseInt(l.nos, 10);
+        const targetCount = !isNaN(bagCount) && bagCount > 0 ? bagCount : 1;
+        const currentWeights = Array.isArray(l.bag_weights) && l.bag_weights.length > 0
+          ? [...l.bag_weights]
+          : [l.weight || ''];
+
+        while (currentWeights.length < targetCount) {
+          currentWeights.push('');
+        }
+        currentWeights[bagIdx] = newWeightVal;
+
+        const totalWeight = currentWeights.reduce((sum, w) => sum + (parseFloat(w) || 0), 0);
+        const roundedWeight = Math.round(totalWeight * 1000) / 1000;
+
+        return {
+          ...l,
+          bag_weights: currentWeights,
+          weight: roundedWeight > 0 ? roundedWeight : (currentWeights.every((w) => w === '' || w === 0) ? '' : roundedWeight),
+        };
+      }),
+    }));
   }
 
   function updateLine(key, field, value) {
@@ -255,6 +348,765 @@ export default function Billing() {
 
   function removeLine(key) {
     setCart((c) => ({ ...c, lines: c.lines.filter((l) => l.key !== key) }));
+  }
+
+  function handleTableKeyDown(e, row, col, field, subIdx = 0) {
+    const line = cart.lines[row];
+    if (!line) return;
+
+    const bagCount = parseInt(line.nos, 10);
+    const weightCount = (!isNaN(bagCount) && bagCount > 0)
+      ? bagCount
+      : (Array.isArray(line.bag_weights) && line.bag_weights.length > 0 ? line.bag_weights.length : 1);
+
+    // 1. Enter Key
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (field === 'rate') {
+        focusTableCell(row, 1);
+      } else if (field === 'nos') {
+        if (line.is_charge_item) {
+          focusCodeInput();
+        } else {
+          focusTableCell(row, 2, 0);
+        }
+      } else if (field === 'weight') {
+        if (subIdx < weightCount - 1) {
+          focusTableCell(row, 2, subIdx + 1);
+        } else {
+          focusCodeInput();
+        }
+      } else if (field === 'delete') {
+        removeLine(line.key);
+        focusCodeInput();
+      }
+      return;
+    }
+
+    // 2. Up Arrow: Move to row above (same column and subIdx)
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (row > 0) {
+        focusTableCell(row - 1, col, subIdx);
+      } else {
+        focusCodeInput();
+      }
+      return;
+    }
+
+    // 3. Down Arrow: Move to row below (same column and subIdx)
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (row < cart.lines.length - 1) {
+        focusTableCell(row + 1, col, subIdx);
+      } else if (cart.billType === 'commission') {
+        commissionInputRef.current?.focus();
+        commissionInputRef.current?.select();
+      } else {
+        paidAmountRef.current?.focus();
+        paidAmountRef.current?.select();
+      }
+      return;
+    }
+
+    // 4. Left Arrow: Move to left input field
+    if (e.key === 'ArrowLeft') {
+      if (col === 3) {
+        e.preventDefault();
+        if (line.is_charge_item) {
+          focusTableCell(row, 1);
+        } else {
+          focusTableCell(row, 2, weightCount - 1);
+        }
+      } else if (col === 2 && isAtStart(e.target)) {
+        e.preventDefault();
+        if (subIdx > 0) {
+          focusTableCell(row, 2, subIdx - 1);
+        } else {
+          focusTableCell(row, 1);
+        }
+      } else if (col === 1 && isAtStart(e.target)) {
+        e.preventDefault();
+        focusTableCell(row, 0);
+      } else if (col === 0 && isAtStart(e.target)) {
+        e.preventDefault();
+        if (row > 0) {
+          const prevLine = cart.lines[row - 1];
+          const prevBags = parseInt(prevLine.nos, 10);
+          const prevCount = (!isNaN(prevBags) && prevBags > 0) ? prevBags : (prevLine.bag_weights?.length || 1);
+          focusTableCell(row - 1, prevLine.is_charge_item ? 1 : 2, prevLine.is_charge_item ? 0 : prevCount - 1);
+        } else {
+          focusCodeInput();
+        }
+      }
+      return;
+    }
+
+    // 5. Right Arrow: Move to right input field
+    if (e.key === 'ArrowRight') {
+      if (col === 0 && isAtEnd(e.target)) {
+        e.preventDefault();
+        focusTableCell(row, 1);
+      } else if (col === 1 && isAtEnd(e.target)) {
+        e.preventDefault();
+        if (line.is_charge_item) {
+          focusTableCell(row, 3);
+        } else {
+          focusTableCell(row, 2, 0);
+        }
+      } else if (col === 2 && isAtEnd(e.target)) {
+        e.preventDefault();
+        if (subIdx < weightCount - 1) {
+          focusTableCell(row, 2, subIdx + 1);
+        } else {
+          focusTableCell(row, 3);
+        }
+      } else if (col === 3) {
+        e.preventDefault();
+        if (row < cart.lines.length - 1) {
+          focusTableCell(row + 1, 0);
+        } else if (cart.billType === 'commission') {
+          commissionInputRef.current?.focus();
+          commissionInputRef.current?.select();
+        } else {
+          paidAmountRef.current?.focus();
+          paidAmountRef.current?.select();
+        }
+      }
+      return;
+    }
+
+    // 6. Backspace Key: Return to previous field when empty or at start
+    if (e.key === 'Backspace') {
+      if (shouldBackspaceNavigate(e.target)) {
+        e.preventDefault();
+        if (col === 2) {
+          if (subIdx > 0) {
+            focusTableCell(row, 2, subIdx - 1);
+          } else {
+            focusTableCell(row, line.nos ? 1 : 0);
+          }
+        } else if (col === 1) {
+          focusTableCell(row, 0);
+        } else if (col === 0) {
+          focusCodeInput();
+        }
+      }
+      return;
+    }
+  }
+
+  function handleCodeKeyDown(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (codeInput.trim()) {
+        addItemByCode(codeInput);
+      } else if (cart.lines.length > 0) {
+        if (cart.billType === 'commission') {
+          commissionInputRef.current?.focus();
+          commissionInputRef.current?.select();
+        } else {
+          paidAmountRef.current?.focus();
+          paidAmountRef.current?.select();
+        }
+      }
+      return;
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (cart.lines.length > 0) {
+        const firstLine = cart.lines[0];
+        focusTableCell(0, firstLine.is_charge_item ? 1 : 2);
+      } else if (cart.billType === 'commission') {
+        commissionInputRef.current?.focus();
+        commissionInputRef.current?.select();
+      } else {
+        paidAmountRef.current?.focus();
+        paidAmountRef.current?.select();
+      }
+      return;
+    }
+
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (!cart.partyId && walkinRef.current) {
+        walkinRef.current.focus();
+        walkinRef.current.select();
+      } else if (partyRef.current) {
+        partyRef.current.focus();
+      }
+      return;
+    }
+
+    if (e.key === 'Backspace' && !codeInput && cart.lines.length > 0) {
+      e.preventDefault();
+      const lastRow = cart.lines.length - 1;
+      const lastLine = cart.lines[lastRow];
+      focusTableCell(lastRow, lastLine.is_charge_item ? 1 : 2);
+      return;
+    }
+  }
+
+  function handleWalkinKeyDown(e) {
+    if (e.key === 'Enter' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      focusCodeInput();
+      return;
+    }
+    if (e.key === 'ArrowLeft' && isAtStart(e.target)) {
+      e.preventDefault();
+      partyRef.current?.focus();
+      return;
+    }
+  }
+
+  function handlePartyKeyDown(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (!cart.partyId && walkinRef.current) {
+        walkinRef.current.focus();
+        walkinRef.current.select();
+      } else {
+        focusCodeInput();
+      }
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      focusCodeInput();
+      return;
+    }
+    if (e.key === 'ArrowRight') {
+      if (!cart.partyId && walkinRef.current) {
+        e.preventDefault();
+        walkinRef.current.focus();
+        walkinRef.current.select();
+      }
+      return;
+    }
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      dateRef.current?.focus();
+      return;
+    }
+  }
+
+  function handleDateKeyDown(e) {
+    if (e.key === 'Enter' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      partyRef.current?.focus();
+      return;
+    }
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      billTypeRef.current?.focus();
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      focusCodeInput();
+      return;
+    }
+  }
+
+  function handleBillTypeKeyDown(e) {
+    if (e.key === 'Enter' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      dateRef.current?.focus();
+      return;
+    }
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      locationRef.current?.focus();
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      focusCodeInput();
+      return;
+    }
+  }
+
+  function handleLocationKeyDown(e) {
+    if (e.key === 'Enter' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      billTypeRef.current?.focus();
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      focusCodeInput();
+      return;
+    }
+  }
+
+  function handleDiscountPercentKeyDown(e) {
+    if (e.key === 'Enter' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (cart.discountPercent === '' && discountAmountRef.current) {
+        discountAmountRef.current.focus();
+        discountAmountRef.current.select();
+      } else {
+        paidAmountRef.current?.focus();
+        paidAmountRef.current?.select();
+      }
+      return;
+    }
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      if (cart.discountPercent === '' && discountAmountRef.current) {
+        discountAmountRef.current.focus();
+        discountAmountRef.current.select();
+      } else {
+        paidAmountRef.current?.focus();
+        paidAmountRef.current?.select();
+      }
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (cart.lines.length > 0) {
+        const lastRow = cart.lines.length - 1;
+        const lastLine = cart.lines[lastRow];
+        focusTableCell(lastRow, lastLine.is_charge_item ? 1 : 2);
+      } else {
+        focusCodeInput();
+      }
+      return;
+    }
+    if (e.key === 'Backspace' && shouldBackspaceNavigate(e.target)) {
+      e.preventDefault();
+      if (cart.lines.length > 0) {
+        const lastRow = cart.lines.length - 1;
+        const lastLine = cart.lines[lastRow];
+        focusTableCell(lastRow, lastLine.is_charge_item ? 1 : 2);
+      } else {
+        focusCodeInput();
+      }
+      return;
+    }
+  }
+
+  function handleDiscountAmountKeyDown(e) {
+    if (e.key === 'Enter' || e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      paidAmountRef.current?.focus();
+      paidAmountRef.current?.select();
+      return;
+    }
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      discountPercentRef.current?.focus();
+      discountPercentRef.current?.select();
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (cart.lines.length > 0) {
+        const lastRow = cart.lines.length - 1;
+        const lastLine = cart.lines[lastRow];
+        focusTableCell(lastRow, lastLine.is_charge_item ? 1 : 2);
+      } else {
+        focusCodeInput();
+      }
+      return;
+    }
+    if (e.key === 'Backspace' && shouldBackspaceNavigate(e.target)) {
+      e.preventDefault();
+      discountPercentRef.current?.focus();
+      discountPercentRef.current?.select();
+      return;
+    }
+  }
+
+  function handleCommissionKeyDown(e) {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (cart.lines.length > 0) {
+        const lastRow = cart.lines.length - 1;
+        const lastLine = cart.lines[lastRow];
+        focusTableCell(lastRow, lastLine.is_charge_item ? 1 : 2);
+      } else {
+        focusCodeInput();
+      }
+      return;
+    }
+    if (e.key === 'ArrowDown' || e.key === 'Enter') {
+      e.preventDefault();
+      patthuRef.current?.focus();
+      patthuRef.current?.select();
+      return;
+    }
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      paidAmountRef.current?.focus();
+      paidAmountRef.current?.select();
+      return;
+    }
+    if (e.key === 'Backspace' && shouldBackspaceNavigate(e.target)) {
+      e.preventDefault();
+      if (cart.lines.length > 0) {
+        const lastRow = cart.lines.length - 1;
+        const lastLine = cart.lines[lastRow];
+        focusTableCell(lastRow, lastLine.is_charge_item ? 1 : 2);
+      } else {
+        focusCodeInput();
+      }
+      return;
+    }
+  }
+
+  function handlePatthuKeyDown(e) {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      commissionInputRef.current?.focus();
+      commissionInputRef.current?.select();
+      return;
+    }
+    if (e.key === 'ArrowDown' || e.key === 'Enter') {
+      e.preventDefault();
+      cooliRef.current?.focus();
+      cooliRef.current?.select();
+      return;
+    }
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      paidAmountRef.current?.focus();
+      paidAmountRef.current?.select();
+      return;
+    }
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      commissionInputRef.current?.focus();
+      commissionInputRef.current?.select();
+      return;
+    }
+    if (e.key === 'Backspace' && shouldBackspaceNavigate(e.target)) {
+      e.preventDefault();
+      commissionInputRef.current?.focus();
+      commissionInputRef.current?.select();
+      return;
+    }
+  }
+
+  function handleCooliKeyDown(e) {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      patthuRef.current?.focus();
+      patthuRef.current?.select();
+      return;
+    }
+    if (e.key === 'ArrowDown' || e.key === 'Enter') {
+      e.preventDefault();
+      vadagaiRef.current?.focus();
+      vadagaiRef.current?.select();
+      return;
+    }
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      paymentMethodRef.current?.focus();
+      return;
+    }
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      patthuRef.current?.focus();
+      patthuRef.current?.select();
+      return;
+    }
+    if (e.key === 'Backspace' && shouldBackspaceNavigate(e.target)) {
+      e.preventDefault();
+      patthuRef.current?.focus();
+      patthuRef.current?.select();
+      return;
+    }
+  }
+
+  function handleVadagaiKeyDown(e) {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      cooliRef.current?.focus();
+      cooliRef.current?.select();
+      return;
+    }
+    if (e.key === 'ArrowDown' || e.key === 'Enter') {
+      e.preventDefault();
+      otherDeductionRef.current?.focus();
+      otherDeductionRef.current?.select();
+      return;
+    }
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      paymentMethodRef.current?.focus();
+      return;
+    }
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      cooliRef.current?.focus();
+      cooliRef.current?.select();
+      return;
+    }
+    if (e.key === 'Backspace' && shouldBackspaceNavigate(e.target)) {
+      e.preventDefault();
+      cooliRef.current?.focus();
+      cooliRef.current?.select();
+      return;
+    }
+  }
+
+  function handleOtherDeductionKeyDown(e) {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      vadagaiRef.current?.focus();
+      vadagaiRef.current?.select();
+      return;
+    }
+    if (e.key === 'ArrowDown' || e.key === 'Enter') {
+      e.preventDefault();
+      if (cart.billType === 'commission') {
+        notesRef.current?.focus();
+        notesRef.current?.select();
+      } else {
+        paidAmountRef.current?.focus();
+        paidAmountRef.current?.select();
+      }
+      return;
+    }
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      notesRef.current?.focus() || paymentMethodRef.current?.focus();
+      return;
+    }
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      vadagaiRef.current?.focus();
+      vadagaiRef.current?.select();
+      return;
+    }
+    if (e.key === 'Backspace' && shouldBackspaceNavigate(e.target)) {
+      e.preventDefault();
+      vadagaiRef.current?.focus();
+      vadagaiRef.current?.select();
+      return;
+    }
+  }
+
+  function handlePaidAmountKeyDown(e) {
+    if (e.key === 'Enter' || e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      paymentMethodRef.current?.focus();
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (cart.billType === 'commission') {
+        otherDeductionRef.current?.focus();
+        otherDeductionRef.current?.select();
+      } else if (discountAmountRef.current && cart.discountPercent === '') {
+        discountAmountRef.current.focus();
+        discountAmountRef.current.select();
+      } else if (discountPercentRef.current) {
+        discountPercentRef.current.focus();
+        discountPercentRef.current.select();
+      } else if (cart.lines.length > 0) {
+        const lastRow = cart.lines.length - 1;
+        const lastLine = cart.lines[lastRow];
+        focusTableCell(lastRow, lastLine.is_charge_item ? 1 : 2);
+      } else {
+        focusCodeInput();
+      }
+      return;
+    }
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      if (cart.billType === 'commission') {
+        if (patthuRef.current) {
+          patthuRef.current.focus();
+          patthuRef.current.select();
+        } else if (commissionInputRef.current) {
+          commissionInputRef.current.focus();
+          commissionInputRef.current.select();
+        }
+      } else if (discountAmountRef.current && cart.discountPercent === '') {
+        discountAmountRef.current.focus();
+        discountAmountRef.current.select();
+      } else if (discountPercentRef.current) {
+        discountPercentRef.current.focus();
+        discountPercentRef.current.select();
+      }
+      return;
+    }
+    if (e.key === 'Backspace' && shouldBackspaceNavigate(e.target)) {
+      e.preventDefault();
+      if (cart.billType === 'commission') {
+        otherDeductionRef.current?.focus();
+        otherDeductionRef.current?.select();
+      } else if (discountAmountRef.current && cart.discountPercent === '') {
+        discountAmountRef.current.focus();
+        discountAmountRef.current.select();
+      } else if (discountPercentRef.current) {
+        discountPercentRef.current.focus();
+        discountPercentRef.current.select();
+      } else if (cart.lines.length > 0) {
+        const lastRow = cart.lines.length - 1;
+        const lastLine = cart.lines[lastRow];
+        focusTableCell(lastRow, lastLine.is_charge_item ? 1 : 2);
+      } else {
+        focusCodeInput();
+      }
+      return;
+    }
+  }
+
+  function handlePaymentMethodKeyDown(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      savePrintBtnRef.current?.focus();
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (methods && methods.length > 0) {
+        const currentIndex = methods.findIndex((m) => String(m.id) === String(cart.paymentMethodId));
+        const nextIndex = currentIndex < methods.length - 1 ? currentIndex + 1 : 0;
+        handlePaymentMethodChange(methods[nextIndex].id);
+      }
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (methods && methods.length > 0) {
+        const currentIndex = methods.findIndex((m) => String(m.id) === String(cart.paymentMethodId));
+        const prevIndex = currentIndex > 0 ? currentIndex - 1 : methods.length - 1;
+        handlePaymentMethodChange(methods[prevIndex].id);
+      }
+      return;
+    }
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      if (cart.billType === 'commission') {
+        if (cooliRef.current) {
+          cooliRef.current.focus();
+          cooliRef.current.select();
+        } else if (vadagaiRef.current) {
+          vadagaiRef.current.focus();
+          vadagaiRef.current.select();
+        } else if (patthuRef.current) {
+          patthuRef.current.focus();
+          patthuRef.current.select();
+        }
+      } else {
+        if (discountAmountRef.current && cart.discountPercent === '') {
+          discountAmountRef.current.focus();
+          discountAmountRef.current.select();
+        } else if (discountPercentRef.current) {
+          discountPercentRef.current.focus();
+          discountPercentRef.current.select();
+        } else {
+          paidAmountRef.current?.focus();
+          paidAmountRef.current?.select();
+        }
+      }
+      return;
+    }
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      notesRef.current?.focus();
+      return;
+    }
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      paidAmountRef.current?.focus();
+      paidAmountRef.current?.select();
+      return;
+    }
+  }
+
+  function handleNotesKeyDown(e) {
+    if (e.key === 'Enter' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      savePrintBtnRef.current?.focus();
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (cart.billType === 'commission') {
+        otherDeductionRef.current?.focus();
+        otherDeductionRef.current?.select();
+      } else {
+        paymentMethodRef.current?.focus();
+      }
+      return;
+    }
+    if (e.key === 'ArrowRight' && (isAtEnd(e.target) || !cart.notes)) {
+      e.preventDefault();
+      savePrintBtnRef.current?.focus();
+      return;
+    }
+    if (e.key === 'ArrowLeft' && (isAtStart(e.target) || !cart.notes)) {
+      e.preventDefault();
+      if (cart.billType === 'commission') {
+        if (otherDeductionRef.current) {
+          otherDeductionRef.current.focus();
+          otherDeductionRef.current.select();
+        } else if (vadagaiRef.current) {
+          vadagaiRef.current.focus();
+          vadagaiRef.current.select();
+        }
+      } else {
+        if (discountAmountRef.current && cart.discountPercent === '') {
+          discountAmountRef.current.focus();
+          discountAmountRef.current.select();
+        } else if (discountPercentRef.current) {
+          discountPercentRef.current.focus();
+          discountPercentRef.current.select();
+        }
+      }
+      return;
+    }
+    if (e.key === 'Backspace' && shouldBackspaceNavigate(e.target)) {
+      e.preventDefault();
+      if (cart.billType === 'commission') {
+        otherDeductionRef.current?.focus();
+        otherDeductionRef.current?.select();
+      } else {
+        paymentMethodRef.current?.focus();
+      }
+      return;
+    }
+  }
+
+  function handleButtonKeyDown(e, btnName) {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      notesRef.current?.focus() || paymentMethodRef.current?.focus() || paidAmountRef.current?.focus();
+      return;
+    }
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      if (btnName === 'savePrint') saveBtnRef.current?.focus();
+      else if (btnName === 'save') holdBtnRef.current?.focus();
+      else if (btnName === 'hold') {
+        if (cart.billType === 'commission') {
+          notesRef.current?.focus();
+        } else {
+          if (discountAmountRef.current && cart.discountPercent === '') {
+            discountAmountRef.current.focus();
+            discountAmountRef.current.select();
+          } else if (discountPercentRef.current) {
+            discountPercentRef.current.focus();
+            discountPercentRef.current.select();
+          }
+        }
+      }
+      return;
+    }
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      if (btnName === 'hold') saveBtnRef.current?.focus();
+      else if (btnName === 'save') savePrintBtnRef.current?.focus();
+      return;
+    }
   }
 
   function lineAmount(l) {
@@ -282,6 +1134,7 @@ export default function Billing() {
   const deductionsExceedSales = totalDeductions > grossTotal + 0.009;
 
   const todayTotal = itemsTotal - discountAmount;
+  const isCommission = cart.billType === 'commission';
   const currentBillTotal = isCommission ? netTotal : todayTotal;
 
   // Positive previousBalance = customer owes shop credit.
@@ -315,22 +1168,6 @@ export default function Billing() {
     }
   }, [currentBillTotal, isPaidManuallyEdited, cart.paymentMethodId, methods]);
 
-  // Default to Cash and paid in full when switching to commission bill
-  useEffect(() => {
-    if (isCommission && methods.length > 0) {
-      const cashMethod = methods.find(
-        (m) => m.name_en?.toLowerCase() === 'cash' || m.name_ta === 'ரொக்கம்' || m.name_ta === 'பணம்'
-      ) || methods.find((m) => m.is_default) || methods[0];
-      if (cashMethod) {
-        setCart((c) => ({
-          ...c,
-          paymentMethodId: cashMethod.id,
-          paidAmount: netTotal > 0 ? netTotal : 0,
-        }));
-      }
-    }
-  }, [isCommission, methods, netTotal]);
-
   function handlePaymentMethodChange(methodId) {
     const selected = methods.find((m) => m.id == methodId);
     const isCredit = selected?.name_ta === 'கடன்' || selected?.name_en?.toLowerCase() === 'credit';
@@ -343,28 +1180,34 @@ export default function Billing() {
   }
 
   function buildPayload() {
-    const cashMethod = methods.find(
-      (m) => m.name_en?.toLowerCase() === 'cash' || m.name_ta === 'ரொக்கம்' || m.name_ta === 'பணம்'
-    ) || methods.find((m) => m.is_default) || methods[0];
-
     return {
       location_type: cart.locationType,
       bill_type: cart.billType,
       party_id: cart.partyId || null,
       walkin_name: cart.partyId ? null : cart.walkinName || null,
       bill_date: cart.billDate,
-      lines: cart.lines.map((l) => ({
-        item_id: l.item_id,
-        item_name_ta: l.item_name_ta,
-        item_name_en: l.item_name_en,
-        unit: l.unit,
-        is_charge_item: l.is_charge_item,
-        rate: Number(l.rate) || 0,
-        nos: Number(l.nos) || 0,
-        bag_count: l.nos !== '' && l.nos !== null && l.nos !== undefined ? Number(l.nos) : null,
-        weight: Number(l.weight) || 0,
-        amount: lineAmount(l),
-      })),
+      lines: cart.lines.map((l) => {
+        const bagWeights = Array.isArray(l.bag_weights)
+          ? l.bag_weights
+              .map((w) => (w !== '' && w !== null && !isNaN(Number(w)) ? Number(w) : null))
+              .filter((w) => w !== null && w > 0)
+          : null;
+        return {
+          item_id: l.item_id,
+          item_name_ta: l.item_name_ta,
+          item_name_en: l.item_name_en,
+          unit: l.unit,
+          is_charge_item: l.is_charge_item,
+          rate: Number(l.rate) || 0,
+          nos: Number(l.nos) || (bagWeights && bagWeights.length > 0 ? bagWeights.length : 0),
+          bag_count: l.nos !== '' && l.nos !== null && l.nos !== undefined
+            ? Number(l.nos)
+            : (bagWeights && bagWeights.length > 0 ? bagWeights.length : null),
+          bag_weights: bagWeights && bagWeights.length > 0 ? bagWeights : null,
+          weight: Number(l.weight) || 0,
+          amount: lineAmount(l),
+        };
+      }),
       discount_percent: cart.discountPercent === '' ? null : Number(cart.discountPercent),
       discount_amount: discountAmount,
       previous_balance: previousBalance,
@@ -375,8 +1218,8 @@ export default function Billing() {
       cooli_amount: isCommission ? Number(cart.cooli) || 0 : 0,
       vadagai_amount: isCommission ? Number(cart.vadagai) || 0 : 0,
       other_deduction_amount: isCommission ? otherDeduction : 0,
-      paid_amount: isCommission ? Math.max(0, netTotal) : paid,
-      payment_method_id: isCommission ? (cashMethod?.id || cart.paymentMethodId || null) : (cart.paymentMethodId || null),
+      paid_amount: paid,
+      payment_method_id: cart.paymentMethodId || null,
       notes: cart.notes || null,
     };
   }
@@ -387,9 +1230,7 @@ export default function Billing() {
     try {
       const bill = await createBill(buildPayload());
       resetCart();
-      if (andPrint) {
-        navigate(`/print/bill/${bill.id}`);
-      }
+      navigate(`/print/bill/${bill.id}`);
     } catch (err) {
       alert(err?.response?.data?.error || 'Save failed');
     } finally {
@@ -409,35 +1250,6 @@ export default function Billing() {
     });
     resetCart();
   }
-
-  useEffect(() => {
-    function handleGlobalKeyDown(e) {
-      if (e.key === 'Shift') {
-        const active = document.activeElement;
-        const isEditingText = active && (active.name === 'walkinName' || active.placeholder?.includes('notes') || (active.type === 'text' && active !== codeRef.current));
-        if (!isEditingText) {
-          if (codeRef.current && active !== codeRef.current) {
-            codeRef.current.focus();
-            codeRef.current.select();
-          }
-        }
-      }
-      if (e.key === 'F9') {
-        e.preventDefault();
-        if (canSave && cart.lines.length > 0 && !saving) {
-          handleSave(true);
-        }
-      }
-      if (e.key === 'F2') {
-        e.preventDefault();
-        if (cart.lines.length > 0 && !saving) {
-          handleHold();
-        }
-      }
-    }
-    window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [canSave, saving, cart.lines.length, handleSave, handleHold]);
 
   function resetCart() {
     setIsPaidManuallyEdited(false);
@@ -469,9 +1281,24 @@ export default function Billing() {
     setHeldBills((rows) => rows.filter((r) => r.id !== id));
   }
 
+  useEffect(() => {
+    if (currentMode === 'quick') return;
+    function onKey(e) {
+      if (e.key === 'F2') {
+        e.preventDefault();
+        handleHold();
+      } else if (e.key === 'F9') {
+        e.preventDefault();
+        handleSave(true);
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart, currentMode]);
 
   return (
-    <div className="w-full space-y-1.5 select-none text-slate-800">
+    <div className="w-full space-y-1.5 select-none text-slate-800 pb-10">
       {/* Top Action Bar */}
       <div className="flex items-center justify-between pb-1 border-b border-gray-200">
         <div className="inline-flex p-0.5 bg-gray-200/80 rounded-md border border-gray-300">
@@ -532,9 +1359,11 @@ export default function Billing() {
               <div>
                 <label className="text-[10px] font-bold uppercase text-gray-500 block mb-0.5">LOCATION</label>
                 <select
+                  ref={locationRef}
                   className="w-full h-7 px-2 text-xs rounded border border-gray-300 bg-white font-medium focus:ring-1 focus:ring-blue-600"
                   value={cart.locationType}
                   onChange={(e) => setCart({ ...cart, locationType: e.target.value })}
+                  onKeyDown={handleLocationKeyDown}
                 >
                   <option value="local">{t('billing.location_local')}</option>
                   <option value="distant">{t('billing.location_distant')}</option>
@@ -544,9 +1373,11 @@ export default function Billing() {
               <div>
                 <label className="text-[10px] font-bold uppercase text-gray-500 block mb-0.5">TYPE</label>
                 <select
+                  ref={billTypeRef}
                   className="w-full h-7 px-2 text-xs rounded border border-gray-300 bg-white font-medium focus:ring-1 focus:ring-blue-600"
                   value={cart.billType}
                   onChange={(e) => setCart({ ...cart, billType: e.target.value })}
+                  onKeyDown={handleBillTypeKeyDown}
                 >
                   <option value="normal">{t('billing.type_normal')}</option>
                   <option value="commission">{t('billing.type_commission')}</option>
@@ -556,156 +1387,45 @@ export default function Billing() {
               <div>
                 <label className="text-[10px] font-bold uppercase text-gray-500 block mb-0.5">{t('common.date')}</label>
                 <input
+                  ref={dateRef}
                   type="date"
                   className="w-full h-7 px-2 text-xs rounded border border-gray-300 bg-white font-medium focus:ring-1 focus:ring-blue-600"
                   value={cart.billDate}
                   onChange={(e) => setCart({ ...cart, billDate: e.target.value })}
+                  onKeyDown={handleDateKeyDown}
                 />
               </div>
 
-              <div className="relative" ref={partyDropdownRef}>
+              <div>
                 <label className="text-[10px] font-bold uppercase text-gray-500 block mb-0.5">{t('billing.select_party')}</label>
-                <div className="relative flex items-center">
-                  <input
-                    ref={partyInputRef}
-                    type="text"
-                    className="w-full h-7 pl-2 pr-6 text-xs rounded border border-gray-300 bg-white font-medium focus:ring-1 focus:ring-blue-600 focus:outline-none"
-                    placeholder="தேடுக... / Search Party"
-                    value={partySearch}
-                    onFocus={() => setPartyDropdownOpen(true)}
-                    onChange={(e) => {
-                      setPartySearch(e.target.value);
-                      setPartyDropdownOpen(true);
-                      if (!e.target.value) {
-                        setCart((c) => ({ ...c, partyId: '' }));
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        if (!partyDropdownOpen) {
-                          setPartyDropdownOpen(true);
-                          return;
-                        }
-                        setHighlightedPartyIndex((prev) => (prev < filteredParties.length - 1 ? prev + 1 : 0));
-                      } else if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        if (!partyDropdownOpen) {
-                          setPartyDropdownOpen(true);
-                          return;
-                        }
-                        setHighlightedPartyIndex((prev) => (prev > 0 ? prev - 1 : filteredParties.length - 1));
-                      } else if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (partyDropdownOpen && filteredParties.length > 0) {
-                          const target = filteredParties[highlightedPartyIndex] || filteredParties[0];
-                          handleSelectParty(target);
-                        } else {
-                          setPartyDropdownOpen(false);
-                          codeRef.current?.focus();
-                          codeRef.current?.select?.();
-                        }
-                      } else if (e.key === 'Escape') {
-                        e.preventDefault();
-                        setPartyDropdownOpen(false);
-                      } else if (e.key === 'Tab') {
-                        setPartyDropdownOpen(false);
-                      }
-                    }}
-                  />
-                  {cart.partyId ? (
-                    <button
-                      type="button"
-                      className="absolute right-1 text-gray-400 hover:text-red-600 font-bold text-xs p-1"
-                      onClick={() => {
-                        setCart((c) => ({ ...c, partyId: '', walkinName: '' }));
-                        setPartySearch('');
-                        partyInputRef.current?.focus();
-                      }}
-                      title="Clear"
-                    >
-                      ✕
-                    </button>
-                  ) : (
-                    <span className="absolute right-2 text-gray-400 text-[10px] pointer-events-none">▼</span>
-                  )}
-                </div>
-
-                {partyDropdownOpen && (
-                  <div
-                    ref={partyListRef}
-                    className="absolute left-0 right-0 top-full mt-1 z-50 bg-white border border-gray-300 rounded-md shadow-xl max-h-56 overflow-y-auto"
-                  >
-                    {filteredParties.length === 0 ? (
-                      <div className="px-2.5 py-2 text-xs text-gray-400 italic">
-                        — {t('common.no_data')} —
-                      </div>
-                    ) : (
-                      filteredParties.map((p, index) => {
-                        const isSelected = p.isWalkin
-                          ? !cart.partyId
-                          : (cart.partyId === p.id || cart.partyId === String(p.id));
-                        const isHighlighted = index === highlightedPartyIndex;
-
-                        return (
-                          <div
-                            key={p.isWalkin ? 'walkin' : p.id}
-                            data-index={index}
-                            className={`px-2.5 py-1.5 text-xs cursor-pointer border-b border-gray-50 flex items-center justify-between transition-colors ${
-                              isHighlighted
-                                ? 'bg-blue-100/90 text-blue-950 font-semibold'
-                                : isSelected
-                                ? 'bg-blue-50/70 font-semibold text-blue-900'
-                                : 'hover:bg-blue-50/60 text-slate-800'
-                            }`}
-                            onMouseEnter={() => setHighlightedPartyIndex(index)}
-                            onClick={() => handleSelectParty(p)}
-                          >
-                            <div>
-                              <div className="font-bold text-slate-900">
-                                {p.name}
-                              </div>
-                              {!p.isWalkin && (p.place || p.phone) && (
-                                <div className="text-[10px] text-gray-500">
-                                  {[p.place, p.phone].filter(Boolean).join(' • ')}
-                                </div>
-                              )}
-                            </div>
-                            {p.isWalkin ? (
-                              <span className="text-[10px] text-gray-400">Default</span>
-                            ) : p.balance !== undefined ? (
-                              <div
-                                className={`font-mono text-[11px] font-bold ${
-                                  Number(p.balance) > 0 ? 'text-red-600' : 'text-emerald-700'
-                                }`}
-                              >
-                                {formatINR(p.balance)}
-                              </div>
-                            ) : null}
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                )}
+                <select
+                  ref={partyRef}
+                  className="w-full h-7 px-2 text-xs rounded border border-gray-300 bg-white font-medium focus:ring-1 focus:ring-blue-600"
+                  value={cart.partyId}
+                  onChange={(e) => setCart({ ...cart, partyId: e.target.value })}
+                  onKeyDown={handlePartyKeyDown}
+                >
+                  <option value="">{t('common.walkin')}</option>
+                  {parties
+                    .filter((p) => (isCommission ? p.type !== 'customer' : true))
+                    .map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                </select>
               </div>
 
               {!cart.partyId ? (
                 <div>
                   <label className="text-[10px] font-bold uppercase text-gray-500 block mb-0.5">WALK-IN NAME</label>
                   <input
-                    ref={walkinInputRef}
+                    ref={walkinRef}
                     className="w-full h-7 px-2 text-xs rounded border border-gray-300 bg-white font-medium focus:ring-1 focus:ring-blue-600"
                     placeholder={t('common.walkin') + ' ' + t('common.name')}
                     value={cart.walkinName}
                     onChange={(e) => setCart({ ...cart, walkinName: e.target.value })}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        codeRef.current?.focus();
-                        codeRef.current?.select?.();
-                      }
-                    }}
+                    onKeyDown={handleWalkinKeyDown}
                   />
                 </div>
               ) : (
@@ -723,12 +1443,7 @@ export default function Billing() {
                 placeholder="Enter Item Shortcut (e.g. A..Z, L, L 1.5) & Press Enter"
                 value={codeInput}
                 onChange={(e) => setCodeInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addItemByCode(codeInput);
-                  }
-                }}
+                onKeyDown={handleCodeKeyDown}
               />
               <span className="absolute left-3.5 text-emerald-600 font-black text-xl pointer-events-none select-none">+</span>
               <span className="absolute right-3 text-[11px] font-bold text-gray-500 bg-white/90 border border-gray-300 px-2 py-1 rounded shadow-2xs pointer-events-none">
@@ -737,114 +1452,148 @@ export default function Billing() {
             </div>
           </div>
 
-          {/* 2. Items Lines Table (Scrollable within container, never scrolls page) */}
+          {/* 2. Items Lines Table (Scrollable within container, smooth scroll) */}
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-xs">
-            <div className="overflow-x-auto overflow-y-auto max-h-[180px] sm:max-h-[220px]">
-              <table className="w-full min-w-[480px] text-xs border-collapse">
+            <div className="overflow-x-auto overflow-y-auto max-h-[220px]">
+              <table className="w-full text-xs border-collapse">
                 <thead className="sticky top-0 bg-slate-50 border-b border-gray-200 z-10">
                   <tr className="text-[10.5px] uppercase font-bold text-slate-600">
                     <th className="py-1 px-2 text-left">{t('billing.item')}</th>
                     <th className="py-1 px-2 text-right w-24">{t('billing.rate')}</th>
                     <th className="py-1 px-2 text-center w-20">{t('billing.nos')}</th>
-                    <th className="py-1 px-2 text-right w-28">{t('billing.qty')}</th>
+                    <th className="py-1 px-2 text-right min-w-[130px]">{t('billing.qty')}</th>
                     <th className="py-1 px-2 text-right w-28">{t('billing.amount')}</th>
                     <th className="py-1 px-1.5 text-center w-8"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 font-medium">
-                  {cart.lines.map((l) => (
-                    <tr key={l.key} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-1 px-2 text-slate-800 font-semibold text-xs">
-                        {l.item_name_ta} {l.item_name_en && <span className="text-gray-400 font-normal text-[11px]">({l.item_name_en})</span>}
-                      </td>
-                      <td className="py-1 px-2 text-right">
-                        <input
-                          ref={(el) => { inputRefs.current[`${l.key}_rate`] = el; }}
-                          className="w-20 h-6.5 px-1.5 text-xs text-right font-mono border border-gray-300 rounded focus:ring-1 focus:ring-blue-600"
-                          type="number"
-                          step="any"
-                          value={l.rate}
-                          onChange={(e) => updateLine(l.key, 'rate', e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              const next = l.is_charge_item
-                                ? inputRefs.current[`${l.key}_nos`]
-                                : inputRefs.current[`${l.key}_weight`];
-                              if (next) {
-                                next.focus();
-                                next.select?.();
-                              } else {
-                                codeRef.current?.focus();
-                                codeRef.current?.select?.();
-                              }
-                            }
-                          }}
-                        />
-                      </td>
-                      <td className="py-1 px-2 text-center">
-                        <input
-                          ref={(el) => { inputRefs.current[`${l.key}_nos`] = el; }}
-                          className="w-16 h-6.5 px-1 text-xs text-center font-mono border border-gray-300 rounded focus:ring-1 focus:ring-blue-600"
-                          type="number"
-                          step="any"
-                          value={l.nos === 0 || l.nos === '0' ? '' : (l.nos ?? '')}
-                          onChange={(e) => updateLine(l.key, 'nos', e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              if (l.is_charge_item) {
-                                codeRef.current?.focus();
-                                codeRef.current?.select?.();
-                              } else {
-                                const next = inputRefs.current[`${l.key}_weight`];
-                                if (next) {
-                                  next.focus();
-                                  next.select?.();
-                                } else {
-                                  codeRef.current?.focus();
-                                  codeRef.current?.select?.();
-                                }
-                              }
-                            }
-                          }}
-                        />
-                      </td>
-                      <td className="py-1 px-2 text-right">
-                        <div className="flex items-center justify-end gap-1">
+                  {cart.lines.map((l, lineIdx) => {
+                    const bagCount = parseInt(l.nos, 10);
+                    const bagCountValid = !isNaN(bagCount) && bagCount > 0;
+                    const count = bagCountValid ? bagCount : 1;
+                    const weights = [];
+                    for (let i = 0; i < count; i++) {
+                      weights.push(
+                        l.bag_weights && l.bag_weights[i] !== undefined
+                          ? l.bag_weights[i]
+                          : (i === 0 ? (l.weight ?? '') : '')
+                      );
+                    }
+
+                    return (
+                      <tr key={l.key} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-1 px-2 text-slate-800 font-semibold text-xs">
+                          {l.item_name_ta} {l.item_name_en && <span className="text-gray-400 font-normal text-[11px]">({l.item_name_en})</span>}
+                        </td>
+                        <td className="py-1 px-2 text-right">
                           <input
-                            ref={(el) => { inputRefs.current[`${l.key}_weight`] = el; }}
-                            className="w-20 h-6.5 px-1.5 text-xs text-right font-mono font-semibold border border-gray-300 rounded focus:ring-1 focus:ring-blue-600"
-                            type="number"
-                            step="any"
-                            disabled={l.is_charge_item}
-                            value={l.weight}
-                            onChange={(e) => updateLine(l.key, 'weight', e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                codeRef.current?.focus();
-                                codeRef.current?.select?.();
+                            data-row={lineIdx}
+                            data-col={0}
+                            data-field="rate"
+                            className="w-20 h-6.5 px-1.5 text-xs text-right font-mono border border-gray-300 rounded focus:ring-1 focus:ring-blue-600"
+                            type="text"
+                            inputMode="decimal"
+                            value={l.rate}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                                updateLine(l.key, 'rate', val);
                               }
                             }}
+                            onKeyDown={(e) => handleTableKeyDown(e, lineIdx, 0, 'rate')}
                           />
-                          {!l.is_charge_item && <span className="text-[10px] text-gray-500 font-mono w-5 text-left">{l.unit || 'kg'}</span>}
-                        </div>
-                      </td>
-                      <td className="py-1 px-2 text-right font-bold font-mono text-slate-900 text-xs">
-                        {formatINR(lineAmount(l))}
-                      </td>
-                      <td className="py-1 px-1.5 text-center">
-                        <button
-                          className="text-red-500 hover:text-red-700 font-bold text-xs"
-                          onClick={() => removeLine(l.key)}
-                          title="Remove item"
-                        >
-                          ✕
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="py-1 px-2 text-center">
+                          <input
+                            data-row={lineIdx}
+                            data-col={1}
+                            data-field="nos"
+                            className="w-16 h-6.5 px-1 text-xs text-center font-mono border border-gray-300 rounded focus:ring-1 focus:ring-blue-600"
+                            type="text"
+                            inputMode="numeric"
+                            value={l.nos === 0 || l.nos === '0' ? '' : (l.nos ?? '')}
+                            onChange={(e) => handleNosChange(l.key, e.target.value)}
+                            onKeyDown={(e) => handleTableKeyDown(e, lineIdx, 1, 'nos')}
+                          />
+                        </td>
+                        <td className="py-1 px-2 text-right">
+                          {l.is_charge_item ? (
+                            <div className="flex items-center justify-end gap-1">
+                              <input
+                                data-row={lineIdx}
+                                data-col={2}
+                                data-sub={0}
+                                data-field="weight"
+                                className="w-16 h-6.5 px-1 text-xs text-center font-mono border border-gray-200 rounded bg-gray-50 text-gray-400"
+                                type="text"
+                                disabled
+                                value="—"
+                              />
+                            </div>
+                          ) : count > 1 ? (
+                            <div className="flex flex-wrap items-center justify-end gap-1">
+                              {weights.map((wVal, bagIdx) => (
+                                <div key={bagIdx} className="flex items-center gap-0.5">
+                                  <input
+                                    data-row={lineIdx}
+                                    data-col={2}
+                                    data-sub={bagIdx}
+                                    data-field="weight"
+                                    aria-label={`Pai ${bagIdx + 1} weight`}
+                                    placeholder={`P${bagIdx + 1}`}
+                                    className="w-14 h-6.5 px-1 text-xs text-right font-mono font-semibold border border-gray-300 rounded focus:ring-1 focus:ring-blue-600 bg-white"
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={wVal ?? ''}
+                                    onChange={(e) => handleBagWeightChange(l.key, bagIdx, e.target.value)}
+                                    onKeyDown={(e) => handleTableKeyDown(e, lineIdx, 2, 'weight', bagIdx)}
+                                  />
+                                  {bagIdx < count - 1 && (
+                                    <span className="text-[11px] font-bold text-gray-400 select-none">+</span>
+                                  )}
+                                </div>
+                              ))}
+                              <span className="text-[11px] font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 whitespace-nowrap select-none ml-1">
+                                = {l.weight || 0} {l.unit || 'kg'}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-end gap-1">
+                              <input
+                                data-row={lineIdx}
+                                data-col={2}
+                                data-sub={0}
+                                data-field="weight"
+                                className="w-20 h-6.5 px-1.5 text-xs text-right font-mono font-semibold border border-gray-300 rounded focus:ring-1 focus:ring-blue-600"
+                                type="text"
+                                inputMode="decimal"
+                                value={weights[0] ?? ''}
+                                onChange={(e) => handleBagWeightChange(l.key, 0, e.target.value)}
+                                onKeyDown={(e) => handleTableKeyDown(e, lineIdx, 2, 'weight', 0)}
+                              />
+                              {!l.is_charge_item && <span className="text-[10px] text-gray-500 font-mono w-5 text-left">{l.unit || 'kg'}</span>}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-1 px-2 text-right font-bold font-mono text-slate-900 text-xs">
+                          {formatINR(lineAmount(l))}
+                        </td>
+                        <td className="py-1 px-1.5 text-center">
+                          <button
+                            data-row={lineIdx}
+                            data-col={3}
+                            data-field="delete"
+                            className="text-red-500 hover:text-red-700 font-bold text-xs"
+                            onClick={() => removeLine(l.key)}
+                            onKeyDown={(e) => handleTableKeyDown(e, lineIdx, 3, 'delete')}
+                            title="Remove item"
+                          >
+                            ✕
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                   {cart.lines.length === 0 && (
                     <tr>
                       <td colSpan={6} className="text-center text-gray-400 py-3 text-xs italic">
@@ -857,168 +1606,76 @@ export default function Billing() {
             </div>
           </div>
 
-          {/* 3. Bottom Section (BILLING SUMMARY & PAYMENT) */}
-          <div className={isCommission ? 'max-w-2xl mx-auto w-full' : 'grid grid-cols-1 md:grid-cols-2 gap-2 items-start'}>
-            {/* Left: BILLING SUMMARY */}
-            <div className="bg-white rounded-lg border border-gray-200 p-2 space-y-1 shadow-xs">
-              <div className="text-[11px] font-black uppercase tracking-wider text-slate-700 pb-0.5 border-b border-gray-100 flex justify-between items-center">
-                <span>{isCommission ? 'COMMISSION BILL SUMMARY' : 'BILLING SUMMARY'}</span>
-                <span className="font-mono text-xs text-slate-600 font-bold">{cart.lines.length} items</span>
+          {/* 3. Bottom Section: Normal Bill (2 Columns) vs Commission Bill (Single Centered Card, No Payment Panel) */}
+          {!isCommission ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 items-start">
+              {/* Left: BILLING SUMMARY */}
+              <div className="bg-white rounded-lg border border-gray-200 p-2 space-y-1 shadow-xs">
+                <div className="text-[11px] font-black uppercase tracking-wider text-slate-700 pb-0.5 border-b border-gray-100 flex justify-between items-center">
+                  <span>BILLING SUMMARY</span>
+                  <span className="font-mono text-xs text-slate-600 font-bold">{cart.lines.length} items</span>
+                </div>
+
+                <Row label={t('billing.items_total')} value={formatINR(itemsTotal)} />
+
+                <div className="flex items-center justify-between py-0.5 text-xs">
+                  <label className="text-gray-600 text-xs mb-0">{t('billing.discount')}</label>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      ref={discountPercentRef}
+                      className="w-16 h-6 px-1.5 text-xs rounded border border-gray-300 text-right font-mono focus:ring-1 focus:ring-blue-600"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="%"
+                      value={cart.discountPercent}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                          setCart({ ...cart, discountPercent: val });
+                        }
+                      }}
+                      onKeyDown={handleDiscountPercentKeyDown}
+                    />
+                    <input
+                      ref={discountAmountRef}
+                      className="w-24 h-6 px-1.5 text-xs rounded border border-gray-300 text-right font-mono focus:ring-1 focus:ring-blue-600"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="₹"
+                      disabled={cart.discountPercent !== ''}
+                      value={cart.discountPercent !== '' ? discountAmount.toFixed(2) : cart.discountAmount}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                          setCart({ ...cart, discountAmount: val });
+                        }
+                      }}
+                      onKeyDown={handleDiscountAmountKeyDown}
+                    />
+                  </div>
+                </div>
+
+                {oldCreditBalance > 0 && (
+                  <Row label="பழைய கடன் பாக்கி (Old Credit)" value={formatINR(oldCreditBalance)} />
+                )}
+                {oldCreditBalance < 0 && (
+                  <Row label="முன் அட்வான்ஸ் இருப்பு (Advance)" value={formatINR(Math.abs(oldCreditBalance))} />
+                )}
+
+                {/* Bill Total Navy Bar */}
+                <div className="bg-[#0a1733] text-white px-3 py-1 rounded-md flex items-center justify-between font-black text-xs mt-1">
+                  <span className="tracking-wide">இன்றைய பில் மொத்தம் (BILL TOTAL)</span>
+                  <span className="font-mono text-sm tracking-tight">{formatINR(currentBillTotal)}</span>
+                </div>
+                {oldCreditBalance > 0 && (
+                  <div className="flex justify-between items-center text-[11px] text-gray-500 font-bold px-1 pt-0.5">
+                    <span>மொத்த கணக்கு (Total with Old Credit):</span>
+                    <span className="font-mono text-slate-800">{formatINR(oldCreditBalance + currentBillTotal)}</span>
+                  </div>
+                )}
               </div>
 
-              <Row label={t('billing.items_total')} value={formatINR(itemsTotal)} />
-
-              {!isCommission ? (
-                <>
-                  <div className="flex items-center justify-between py-0.5 text-xs">
-                    <label className="text-gray-600 text-xs mb-0">{t('billing.discount')}</label>
-                    <div className="flex items-center gap-1.5">
-                      <input
-                        className="w-16 h-6 px-1.5 text-xs rounded border border-gray-300 text-right font-mono"
-                        type="number"
-                        placeholder="%"
-                        value={cart.discountPercent}
-                        onChange={(e) => setCart({ ...cart, discountPercent: e.target.value })}
-                      />
-                      <input
-                        className="w-24 h-6 px-1.5 text-xs rounded border border-gray-300 text-right font-mono"
-                        type="number"
-                        placeholder="₹"
-                        disabled={cart.discountPercent !== ''}
-                        value={cart.discountPercent !== '' ? discountAmount.toFixed(2) : cart.discountAmount}
-                        onChange={(e) => setCart({ ...cart, discountAmount: e.target.value })}
-                      />
-                    </div>
-                  </div>
-
-                  {oldCreditBalance > 0 && (
-                    <Row label="பழைய கடன் பாக்கி (Old Credit)" value={formatINR(oldCreditBalance)} />
-                  )}
-                  {oldCreditBalance < 0 && (
-                    <Row label="முன் அட்வான்ஸ் இருப்பு (Advance)" value={formatINR(Math.abs(oldCreditBalance))} />
-                  )}
-
-                  {/* Bill Total Navy Bar */}
-                  <div className="bg-[#0a1733] text-white px-3 py-1 rounded-md flex items-center justify-between font-black text-xs mt-1">
-                    <span className="tracking-wide">இன்றைய பில் மொத்தம் (BILL TOTAL)</span>
-                    <span className="font-mono text-sm tracking-tight">{formatINR(currentBillTotal)}</span>
-                  </div>
-                  {oldCreditBalance > 0 && (
-                    <div className="flex justify-between items-center text-[11px] text-gray-500 font-bold px-1 pt-0.5">
-                      <span>மொத்த கணக்கு (Total with Old Credit):</span>
-                      <span className="font-mono text-slate-800">{formatINR(oldCreditBalance + currentBillTotal)}</span>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between py-0.5 text-xs">
-                    <span className="text-gray-600">{t('billing.commission_mode')}</span>
-                    <div className="inline-flex p-0.5 bg-gray-100 rounded border border-gray-200 text-xs">
-                      <button
-                        type="button"
-                        className={`px-2 py-0.5 rounded text-[11px] font-bold ${cart.commissionMode === 'percentage' ? 'bg-blue-900 text-white' : 'text-gray-600'}`}
-                        onClick={() => setCart({ ...cart, commissionMode: 'percentage' })}
-                      >
-                        %
-                      </button>
-                      <button
-                        type="button"
-                        className={`px-2 py-0.5 rounded text-[11px] font-bold ${cart.commissionMode === 'fixed' ? 'bg-blue-900 text-white' : 'text-gray-600'}`}
-                        onClick={() => setCart({ ...cart, commissionMode: 'fixed' })}
-                      >
-                        Fixed ₹
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between py-0.5 text-xs">
-                    <label className="text-gray-600 text-xs mb-0">{t('billing.commission')}</label>
-                    {cart.commissionMode === 'percentage' ? (
-                      <input
-                        className="w-20 h-6 px-1.5 text-xs text-right font-mono rounded border border-gray-300"
-                        type="number"
-                        min="0"
-                        placeholder="%"
-                        value={cart.commissionPercent}
-                        onChange={(e) => setCart({ ...cart, commissionPercent: e.target.value })}
-                      />
-                    ) : (
-                      <input
-                        className="w-24 h-6 px-1.5 text-xs text-right font-mono rounded border border-gray-300"
-                        type="number"
-                        min="0"
-                        placeholder="₹"
-                        value={cart.commissionAmount}
-                        onChange={(e) => setCart({ ...cart, commissionAmount: e.target.value })}
-                      />
-                    )}
-                  </div>
-
-                  {cart.commissionMode === 'percentage' && (
-                    <Row label={t('billing.commission') + ' (₹)'} value={formatINR(commissionAmount)} />
-                  )}
-
-                  <NumberRow label={t('billing.patthu')} value={cart.patthu} onChange={(v) => setCart({ ...cart, patthu: v })} />
-                  <NumberRow label={t('billing.cooli')} value={cart.cooli} onChange={(v) => setCart({ ...cart, cooli: v })} />
-                  <NumberRow label={t('billing.vadagai')} value={cart.vadagai} onChange={(v) => setCart({ ...cart, vadagai: v })} />
-                  <NumberRow label={t('billing.other_deduction')} value={cart.otherDeduction} onChange={(v) => setCart({ ...cart, otherDeduction: v })} />
-                  
-                  <Row label={t('billing.commission_side_total')} value={formatINR(totalDeductions)} bold />
-
-                  {deductionsExceedSales && (
-                    <p className="text-red-600 text-xs font-bold bg-red-50 border border-red-200 rounded px-2 py-0.5">
-                      ⚠ {t('billing.validation_exceeds')}
-                    </p>
-                  )}
-
-                  {/* Net Total Navy Bar */}
-                  <div className="bg-[#0a1733] text-white px-3 py-1 rounded-md flex items-center justify-between font-black text-xs mt-1">
-                    <span className="tracking-wide">NET TOTAL</span>
-                    <span className="font-mono text-sm tracking-tight">{formatINR(netTotal)}</span>
-                  </div>
-
-                  {/* Commission Notes & Action Buttons (Direct Confirmation) */}
-                  <input
-                    className="w-full h-6 px-2 text-xs rounded border border-gray-300 text-gray-700 placeholder-gray-400 mt-2"
-                    placeholder={t('billing.notes') + ' (optional)...'}
-                    value={cart.notes}
-                    onChange={(e) => setCart({ ...cart, notes: e.target.value })}
-                  />
-
-                  <div className="flex gap-1.5 pt-1">
-                    <button
-                      type="button"
-                      className="btn-secondary h-7 py-0.5 px-2 text-xs font-bold rounded flex-1"
-                      onClick={handleHold}
-                      disabled={saving || cart.lines.length === 0}
-                    >
-                      {t('billing.hold_bill')} (F2)
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-secondary h-7 py-0.5 px-2 text-xs font-bold rounded flex-1"
-                      onClick={() => handleSave(false)}
-                      disabled={saving || !canSave || cart.lines.length === 0}
-                    >
-                      {t('billing.save')}
-                    </button>
-                    <button
-                      type="button"
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white h-7 py-0.5 px-3 text-xs font-black rounded shadow-xs flex-1 flex items-center justify-center gap-1 transition-all"
-                      onClick={() => handleSave(true)}
-                      disabled={saving || !canSave || cart.lines.length === 0}
-                    >
-                      <span>✓</span>
-                      <span>{t('billing.save_print')} (F9)</span>
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Right: PAYMENT (Only for regular bills, hidden for Commission bills) */}
-            {!isCommission && (
+              {/* Right: PAYMENT */}
               <div className="bg-white rounded-lg border border-gray-200 p-2 space-y-1 shadow-xs">
                 <div className="text-[11px] font-black uppercase tracking-wider text-slate-700 pb-0.5 border-b border-gray-100">
                   PAYMENT
@@ -1028,14 +1685,20 @@ export default function Billing() {
                   <label className="text-gray-600 text-xs mb-0 font-medium">{t('billing.paid_amount')}</label>
                   <div className="flex items-center gap-1">
                     <input
+                      ref={paidAmountRef}
                       className="w-24 h-6 px-1.5 text-xs text-right font-mono font-bold rounded border border-gray-300 focus:ring-1 focus:ring-blue-600"
-                      type="number"
-                      step="0.01"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="0.00"
                       value={cart.paidAmount}
                       onChange={(e) => {
-                        setIsPaidManuallyEdited(true);
-                        setCart({ ...cart, paidAmount: e.target.value });
+                        const val = e.target.value;
+                        if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                          setIsPaidManuallyEdited(true);
+                          setCart({ ...cart, paidAmount: val });
+                        }
                       }}
+                      onKeyDown={handlePaidAmountKeyDown}
                     />
                     <button
                       type="button"
@@ -1080,9 +1743,11 @@ export default function Billing() {
                 <div className="flex items-center justify-between py-0.5 text-xs">
                   <label className="text-gray-600 text-xs mb-0 font-medium">{t('billing.payment_method')}</label>
                   <select
-                    className="w-36 h-6 px-1.5 text-xs rounded border border-gray-300 font-medium bg-white focus:ring-1 focus:ring-blue-600"
+                    ref={paymentMethodRef}
+                    className="w-36 h-6 px-1.5 text-xs rounded border border-gray-300 font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 cursor-pointer"
                     value={cart.paymentMethodId}
                     onChange={(e) => handlePaymentMethodChange(e.target.value)}
+                    onKeyDown={handlePaymentMethodKeyDown}
                   >
                     {methods.map((m) => (
                       <option key={m.id} value={m.id}>
@@ -1194,34 +1859,42 @@ export default function Billing() {
                 )}
 
                 <input
+                  ref={notesRef}
                   className="w-full h-6 px-2 text-xs rounded border border-gray-300 text-gray-700 placeholder-gray-400"
                   placeholder={t('billing.notes') + ' (optional)...'}
                   value={cart.notes}
                   onChange={(e) => setCart({ ...cart, notes: e.target.value })}
+                  onKeyDown={handleNotesKeyDown}
                 />
 
                 {/* Action Buttons */}
                 <div className="flex gap-1.5 pt-1">
                   <button
+                    ref={holdBtnRef}
                     type="button"
-                    className="btn-secondary h-7 py-0.5 px-2 text-xs font-bold rounded flex-1"
+                    className="btn-secondary h-7 py-0.5 px-2 text-xs font-bold rounded flex-1 focus:ring-2 focus:ring-slate-400 focus:outline-none"
                     onClick={handleHold}
+                    onKeyDown={(e) => handleButtonKeyDown(e, 'hold')}
                     disabled={saving || cart.lines.length === 0}
                   >
                     {t('billing.hold_bill')} (F2)
                   </button>
                   <button
+                    ref={saveBtnRef}
                     type="button"
-                    className="btn-secondary h-7 py-0.5 px-2 text-xs font-bold rounded flex-1"
-                    onClick={() => handleSave(false)}
+                    className="btn-secondary h-7 py-0.5 px-2 text-xs font-bold rounded flex-1 focus:ring-2 focus:ring-slate-400 focus:outline-none"
+                    onClick={() => handleSave(true)}
+                    onKeyDown={(e) => handleButtonKeyDown(e, 'save')}
                     disabled={saving || !canSave || cart.lines.length === 0}
                   >
                     {t('billing.save')}
                   </button>
                   <button
+                    ref={savePrintBtnRef}
                     type="button"
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white h-7 py-0.5 px-3 text-xs font-black rounded shadow-xs flex-1 flex items-center justify-center gap-1 transition-all"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white h-7 py-0.5 px-3 text-xs font-black rounded shadow-xs flex-1 flex items-center justify-center gap-1 transition-all focus:ring-2 focus:ring-emerald-400 focus:outline-none"
                     onClick={() => handleSave(true)}
+                    onKeyDown={(e) => handleButtonKeyDown(e, 'savePrint')}
                     disabled={saving || !canSave || cart.lines.length === 0}
                   >
                     <span>✓</span>
@@ -1229,12 +1902,173 @@ export default function Billing() {
                   </button>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            /* Commission Bill: Single Centered Card, No Payment Panel (Matches Reference Screenshots 3 & 4) */
+            <div className="max-w-xl mx-auto w-full">
+              <div className="bg-white rounded-lg border border-gray-200 p-2 space-y-1 shadow-xs">
+                <div className="text-[11px] font-black uppercase tracking-wider text-slate-700 pb-0.5 border-b border-gray-100 flex justify-between items-center">
+                  <span>COMMISSION BILL SUMMARY</span>
+                  <span className="font-mono text-xs text-slate-600 font-bold uppercase">{cart.lines.length} ITEMS</span>
+                </div>
+
+                <Row label={t('billing.items_total')} value={formatINR(itemsTotal)} />
+
+                <div className="flex items-center justify-between py-0.5 text-xs">
+                  <span className="text-gray-600">{t('billing.commission_mode')}</span>
+                  <div className="inline-flex p-0.5 bg-gray-100 rounded border border-gray-200 text-xs">
+                    <button
+                      type="button"
+                      className={`px-2 py-0.5 rounded text-[11px] font-bold ${cart.commissionMode === 'percentage' ? 'bg-blue-900 text-white' : 'text-gray-600'}`}
+                      onClick={() => setCart({ ...cart, commissionMode: 'percentage' })}
+                    >
+                      %
+                    </button>
+                    <button
+                      type="button"
+                      className={`px-2 py-0.5 rounded text-[11px] font-bold ${cart.commissionMode === 'fixed' ? 'bg-blue-900 text-white' : 'text-gray-600'}`}
+                      onClick={() => setCart({ ...cart, commissionMode: 'fixed' })}
+                    >
+                      Fixed ₹
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between py-0.5 text-xs">
+                  <label className="text-gray-600 text-xs mb-0">{t('billing.commission')}</label>
+                  {cart.commissionMode === 'percentage' ? (
+                    <input
+                      ref={commissionInputRef}
+                      className="w-20 h-6 px-1.5 text-xs text-right font-mono rounded border border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="%"
+                      value={cart.commissionPercent === 0 || cart.commissionPercent === '0' ? '' : (cart.commissionPercent ?? '')}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                          setCart({ ...cart, commissionPercent: val });
+                        }
+                      }}
+                      onKeyDown={handleCommissionKeyDown}
+                    />
+                  ) : (
+                    <input
+                      ref={commissionInputRef}
+                      className="w-24 h-6 px-1.5 text-xs text-right font-mono rounded border border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="₹"
+                      value={cart.commissionAmount === 0 || cart.commissionAmount === '0' ? '' : (cart.commissionAmount ?? '')}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                          setCart({ ...cart, commissionAmount: val });
+                        }
+                      }}
+                      onKeyDown={handleCommissionKeyDown}
+                    />
+                  )}
+                </div>
+
+                {cart.commissionMode === 'percentage' && (
+                  <Row label={t('billing.commission') + ' (₹)'} value={formatINR(commissionAmount)} />
+                )}
+
+                <NumberRow
+                  inputRef={patthuRef}
+                  label={t('billing.patthu')}
+                  value={cart.patthu}
+                  onChange={(v) => setCart({ ...cart, patthu: v })}
+                  onKeyDown={handlePatthuKeyDown}
+                />
+                <NumberRow
+                  inputRef={cooliRef}
+                  label={t('billing.cooli')}
+                  value={cart.cooli}
+                  onChange={(v) => setCart({ ...cart, cooli: v })}
+                  onKeyDown={handleCooliKeyDown}
+                />
+                <NumberRow
+                  inputRef={vadagaiRef}
+                  label={t('billing.vadagai')}
+                  value={cart.vadagai}
+                  onChange={(v) => setCart({ ...cart, vadagai: v })}
+                  onKeyDown={handleVadagaiKeyDown}
+                />
+                <NumberRow
+                  inputRef={otherDeductionRef}
+                  label={t('billing.other_deduction')}
+                  value={cart.otherDeduction}
+                  onChange={(v) => setCart({ ...cart, otherDeduction: v })}
+                  onKeyDown={handleOtherDeductionKeyDown}
+                />
+
+                <Row label={t('billing.commission_side_total')} value={formatINR(totalDeductions)} bold />
+
+                {deductionsExceedSales && (
+                  <p className="text-red-600 text-xs font-bold bg-red-50 border border-red-200 rounded px-2 py-0.5">
+                    ⚠ {t('billing.validation_exceeds')}
+                  </p>
+                )}
+
+                {/* Net Total Navy Bar */}
+                <div className="bg-[#0a1733] text-white px-3 py-1 rounded-md flex items-center justify-between font-black text-xs mt-1">
+                  <span className="tracking-wide">NET TOTAL</span>
+                  <span className="font-mono text-sm tracking-tight">{formatINR(netTotal)}</span>
+                </div>
+
+                {/* Notes (optional) Input directly in summary card */}
+                <input
+                  ref={notesRef}
+                  className="w-full h-6 px-2 text-xs rounded border border-gray-300 text-gray-700 placeholder-gray-400 mt-1"
+                  placeholder={t('billing.notes') + ' (optional)...'}
+                  value={cart.notes}
+                  onChange={(e) => setCart({ ...cart, notes: e.target.value })}
+                  onKeyDown={handleNotesKeyDown}
+                />
+
+                {/* Action Buttons inside summary card */}
+                <div className="flex gap-1.5 pt-1">
+                  <button
+                    ref={holdBtnRef}
+                    type="button"
+                    className="btn-secondary h-7 py-0.5 px-2 text-xs font-bold rounded flex-1 focus:ring-2 focus:ring-slate-400 focus:outline-none"
+                    onClick={handleHold}
+                    onKeyDown={(e) => handleButtonKeyDown(e, 'hold')}
+                    disabled={saving || cart.lines.length === 0}
+                  >
+                    {t('billing.hold_bill')} (F2)
+                  </button>
+                  <button
+                    ref={saveBtnRef}
+                    type="button"
+                    className="btn-secondary h-7 py-0.5 px-2 text-xs font-bold rounded flex-1 focus:ring-2 focus:ring-slate-400 focus:outline-none"
+                    onClick={() => handleSave(true)}
+                    onKeyDown={(e) => handleButtonKeyDown(e, 'save')}
+                    disabled={saving || !canSave || cart.lines.length === 0}
+                  >
+                    {t('billing.save')}
+                  </button>
+                  <button
+                    ref={savePrintBtnRef}
+                    type="button"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white h-7 py-0.5 px-3 text-xs font-black rounded shadow-xs flex-1 flex items-center justify-center gap-1 transition-all focus:ring-2 focus:ring-emerald-400 focus:outline-none"
+                    onClick={() => handleSave(true)}
+                    onKeyDown={(e) => handleButtonKeyDown(e, 'savePrint')}
+                    disabled={saving || !canSave || cart.lines.length === 0}
+                  >
+                    <span>✓</span>
+                    <span>{t('billing.save_print')} (F9)</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* 4. Bottom Compact Summary Strip */}
-          <div className="bg-slate-900 text-white rounded-md px-3 sm:px-4 py-1.5 flex flex-col sm:flex-row gap-1 sm:gap-4 items-start sm:items-center justify-between text-xs font-medium">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+          <div className="bg-slate-900 text-white rounded-md px-4 py-1 flex items-center justify-between text-xs font-medium">
+            <div className="space-x-4">
               <span>Total Item Sales: <strong className="text-white font-mono">{formatINR(itemsTotal)}</strong></span>
               {isCommission && (
                 <span>Total Deductions: <strong className="text-amber-300 font-mono">{formatINR(totalDeductions)}</strong></span>
@@ -1247,8 +2081,8 @@ export default function Billing() {
 
           {/* Held Bills Modal */}
           {heldOpen && (
-            <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 no-print p-4">
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 w-full max-w-lg p-4 space-y-3">
+            <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 no-print p-4 overflow-y-auto">
+              <div className="bg-white rounded-xl shadow-lg border border-gray-200 w-full max-w-lg p-4 space-y-3 my-auto max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center border-b pb-2">
                   <h2 className="font-bold text-sm text-slate-800">{t('billing.held_bills')}</h2>
                   <button className="btn-secondary py-0.5 px-2 text-xs" onClick={() => setHeldOpen(false)}>
@@ -1300,16 +2134,24 @@ function Row({ label, value, bold, tone }) {
   );
 }
 
-function NumberRow({ label, value, onChange }) {
+function NumberRow({ label, value, onChange, inputRef, onKeyDown, placeholder = '₹' }) {
   return (
     <div className="flex items-center justify-between py-0.5 text-xs">
       <label className="text-gray-600 text-xs mb-0">{label}</label>
       <input
+        ref={inputRef}
         className="w-24 h-6 px-1.5 text-xs text-right font-mono rounded border border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-600"
-        type="number"
-        step="0.01"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        type="text"
+        inputMode="decimal"
+        placeholder={placeholder}
+        value={value === 0 || value === '0' ? '' : (value ?? '')}
+        onChange={(e) => {
+          const val = e.target.value;
+          if (val === '' || /^\d*\.?\d*$/.test(val)) {
+            onChange(val);
+          }
+        }}
+        onKeyDown={onKeyDown}
       />
     </div>
   );

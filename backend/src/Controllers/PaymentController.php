@@ -20,29 +20,59 @@ class PaymentController
     public function index(): void
     {
         AuthMiddleware::authenticate();
-        $sql = 'SELECT pay.*, p.name AS party_name, pm.name_ta AS payment_method_name
-                FROM payments pay
-                LEFT JOIN parties p ON p.id = pay.party_id
-                LEFT JOIN payment_methods pm ON pm.id = pay.payment_method_id
-                WHERE 1=1';
+        $where = 'WHERE 1=1';
         $params = [];
         if (!empty($_GET['party_id'])) {
-            $sql .= ' AND pay.party_id = :party_id';
+            $where .= ' AND pay.party_id = :party_id';
             $params['party_id'] = $_GET['party_id'];
         }
         if (!empty($_GET['direction'])) {
-            $sql .= ' AND pay.direction = :direction';
+            $where .= ' AND pay.direction = :direction';
             $params['direction'] = $_GET['direction'];
         }
         if (!empty($_GET['from'])) {
-            $sql .= ' AND pay.payment_date >= :from';
+            $where .= ' AND pay.payment_date >= :from';
             $params['from'] = $_GET['from'];
         }
         if (!empty($_GET['to'])) {
-            $sql .= ' AND pay.payment_date <= :to';
+            $where .= ' AND pay.payment_date <= :to';
             $params['to'] = $_GET['to'];
         }
-        $sql .= ' ORDER BY pay.payment_date DESC, pay.id DESC LIMIT 500';
+
+        $page = isset($_GET['page']) ? max(1, (int) $_GET['page']) : null;
+        $limit = isset($_GET['limit']) ? max(1, (int) $_GET['limit']) : 10;
+
+        if ($page !== null) {
+            $countStmt = $this->pdo->prepare("SELECT COUNT(*) FROM payments pay {$where}");
+            $countStmt->execute($params);
+            $total = (int) $countStmt->fetchColumn();
+
+            $offset = ($page - 1) * $limit;
+            $sql = "SELECT pay.*, p.name AS party_name, pm.name_ta AS payment_method_name
+                    FROM payments pay
+                    LEFT JOIN parties p ON p.id = pay.party_id
+                    LEFT JOIN payment_methods pm ON pm.id = pay.payment_method_id
+                    {$where}
+                    ORDER BY pay.payment_date DESC, pay.id DESC LIMIT {$limit} OFFSET {$offset}";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll();
+
+            Response::json([
+                'data' => $rows,
+                'total' => $total,
+                'page' => $page,
+                'limit' => $limit,
+                'total_pages' => (int) ceil($total / $limit),
+            ]);
+        }
+
+        $sql = "SELECT pay.*, p.name AS party_name, pm.name_ta AS payment_method_name
+                FROM payments pay
+                LEFT JOIN parties p ON p.id = pay.party_id
+                LEFT JOIN payment_methods pm ON pm.id = pay.payment_method_id
+                {$where}
+                ORDER BY pay.payment_date DESC, pay.id DESC LIMIT 500";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
@@ -52,23 +82,11 @@ class PaymentController
     public function show(string $id): void
     {
         AuthMiddleware::authenticate();
-        $stmt = $this->pdo->prepare(
-            'SELECT pay.*, p.name AS party_name, p.phone AS party_phone, p.place AS party_place,
-                    pm.name_ta AS payment_method_name, pm.name_en AS payment_method_name_en
-             FROM payments pay
-             LEFT JOIN parties p ON p.id = pay.party_id
-             LEFT JOIN payment_methods pm ON pm.id = pay.payment_method_id
-             WHERE pay.id = :id'
-        );
+        $stmt = $this->pdo->prepare('SELECT * FROM payments WHERE id = :id');
         $stmt->execute(['id' => $id]);
         $payment = $stmt->fetch();
         if (!$payment) {
             Response::error('Payment not found', 404);
-        }
-        if (!empty($payment['party_id'])) {
-            $payment['current_party_balance'] = LedgerService::balanceAsOf($this->pdo, (int) $payment['party_id']);
-        } else {
-            $payment['current_party_balance'] = 0.0;
         }
         $alloc = $this->pdo->prepare(
             "SELECT pa.*, b.bill_no AS doc_no, pu.purchase_no AS purchase_doc_no

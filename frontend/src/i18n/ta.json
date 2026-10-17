@@ -12,7 +12,6 @@
     "reports": "அறிக்கைகள்",
     "settings": "அமைப்புகள்",
     "users": "பயனர்கள்",
-    "install_app": "ஆப் நிறுவு",
     "logout": "வெளியேறு"
   },
   "common": {
@@ -49,8 +48,8 @@
     "tamil": "தமிழ்"
   },
   "billing": {
-    "location_local": "சுரண்டை",
-    "location_distant": "கேரளா",
+    "location_local": "உள்ளூர்",
+    "location_distant": "தூர ஊர்",
     "type_normal": "வழக்கமான பில்",
     "type_commission": "கமிஷன் பில்",
     "select_party": "நபரைத் தேர்ந்தெடு",

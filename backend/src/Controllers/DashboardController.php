@@ -89,15 +89,11 @@ class DashboardController
 
         // Top items this month
         $topItems = $this->pdo->prepare(
-            "SELECT COALESCE(NULLIF(i.name_ta, ''), bl.item_name_ta) AS item_name_ta,
-                    COALESCE(NULLIF(i.name_en, ''), bl.item_name_en) AS item_name_en,
-                    SUM(bl.weight) AS total_weight,
-                    SUM(bl.amount) AS total_amount
+            "SELECT bl.item_name_ta, bl.item_name_en, SUM(bl.weight) AS total_weight, SUM(bl.amount) AS total_amount
              FROM bill_lines bl
              JOIN bills b ON b.id = bl.bill_id
-             LEFT JOIN items i ON (LOWER(TRIM(i.name_en)) = LOWER(TRIM(bl.item_name_en)) OR i.id = bl.item_id)
              WHERE b.bill_date >= :m AND b.status = 'active' AND bl.is_charge_item = 0
-             GROUP BY COALESCE(NULLIF(i.name_ta, ''), bl.item_name_ta), COALESCE(NULLIF(i.name_en, ''), bl.item_name_en)
+             GROUP BY bl.item_name_ta, bl.item_name_en
              ORDER BY total_amount DESC LIMIT 10"
         );
         $topItems->execute(['m' => $monthStart]);

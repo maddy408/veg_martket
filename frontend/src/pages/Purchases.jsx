@@ -1,19 +1,20 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { listItems } from '../api/items';
 import { listParties } from '../api/parties';
 import { listPaymentMethods } from '../api/payments';
 import { listPurchases, createPurchase, deletePurchase } from '../api/purchases';
 import { formatINR, formatDateDMY, todayISO } from '../utils/format';
+import Pagination from '../components/Pagination';
 
 export default function Purchases() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [parties, setParties] = useState([]);
   const [methods, setMethods] = useState([]);
   const [purchases, setPurchases] = useState([]);
+  const [totalPurchases, setTotalPurchases] = useState(0);
+  const [purchasePage, setPurchasePage] = useState(1);
   const [partyId, setPartyId] = useState('');
   const [date, setDate] = useState(todayISO());
   const [lines, setLines] = useState([]);
@@ -43,8 +44,17 @@ export default function Purchases() {
     listParties({ type: 'supplier' }).then(setParties);
   }
 
-  function reload() {
-    listPurchases().then(setPurchases);
+  function reload(p = purchasePage) {
+    listPurchases({ page: p, limit: 10 }).then((res) => {
+      if (res && res.data) {
+        setPurchases(res.data);
+        setTotalPurchases(res.total);
+        setPurchasePage(res.page);
+      } else if (Array.isArray(res)) {
+        setPurchases(res);
+        setTotalPurchases(res.length);
+      }
+    });
     loadParties();
   }
 
@@ -56,7 +66,12 @@ export default function Purchases() {
   // Add item by shortcut code
   function addByCode() {
     if (!code.trim()) return;
-    const match = items.find((i) => i.code?.toLowerCase() === code.trim().toLowerCase());
+    const raw = code.trim().toLowerCase();
+    const clean = raw.replace(/[^a-z0-9]/g, '');
+    const match = items.find((i) => {
+      const icode = (i.code || '').toLowerCase();
+      return icode === raw || icode.replace(/[^a-z0-9]/g, '') === clean;
+    });
     if (!match) {
       setErrorMsg(`குறியீடு '${code}' கொண்ட பொருள் கிடைக்கவில்லை (Item not found for code '${code}')`);
       setTimeout(() => setErrorMsg(''), 3000);
@@ -163,9 +178,7 @@ export default function Purchases() {
       setDiscount(0);
       setPaid('');
       reload();
-      if (res?.id) {
-        navigate(`/print/purchase/${res.id}`);
-      }
+      setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err) {
       console.error('Purchase save error:', err);
       setErrorMsg(err?.response?.data?.error || 'கொள்முதல் சேமிப்பதில் பிழை ஏற்பட்டது (Failed to save purchase)');
@@ -491,12 +504,13 @@ export default function Purchases() {
       </div>
 
       {/* Purchases History List */}
-      <div className="card overflow-x-auto shadow-sm border border-gray-200 space-y-2">
-        <div className="flex items-center justify-between px-1 py-1">
-          <h2 className="text-lg font-bold text-gray-900">சமீபத்திய கொள்முதல் பட்டியல் (Recent Purchases)</h2>
-          <span className="text-xs font-bold text-gray-500">{purchases.length} பதிவுகள் (Records)</span>
+      <div className="card overflow-hidden p-0 shadow-sm border border-gray-200">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <h2 className="text-base font-bold text-gray-900">சமீபத்திய கொள்முதல் பட்டியல் (Recent Purchases)</h2>
+          <span className="text-xs font-bold text-gray-500">{totalPurchases} பதிவுகள் (Records)</span>
         </div>
 
+        <div className="overflow-x-auto">
         <table className="data-table w-full">
           <thead>
             <tr className="bg-slate-100 text-slate-700 font-bold text-xs uppercase">
@@ -532,28 +546,16 @@ export default function Purchases() {
                       </span>
                     </td>
                     <td className="text-center py-2 px-3 whitespace-nowrap">
-                      <div className="flex items-center justify-center gap-1">
-                        <button
-                          className="p-1.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors inline-flex items-center justify-center"
-                          onClick={() => navigate(`/print/purchase/${p.id}`)}
-                          title="கொள்முதல் ரசீது அச்சிடு (Print)"
-                          type="button"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 002-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                          </svg>
-                        </button>
-                        <button
-                          className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors inline-flex items-center justify-center"
-                          onClick={() => handleDelete(p.id)}
-                          title={t('common.delete')}
-                          type="button"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
+                      <button
+                        className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors inline-flex items-center justify-center"
+                        onClick={() => handleDelete(p.id)}
+                        title={t('common.delete')}
+                        type="button"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
                     </td>
                   </tr>
                 );
@@ -561,6 +563,18 @@ export default function Purchases() {
             )}
           </tbody>
         </table>
+        </div>
+
+        <Pagination
+          page={purchasePage}
+          total={totalPurchases}
+          limit={10}
+          onPageChange={(p) => {
+            setPurchasePage(p);
+            reload(p);
+          }}
+          label={t('nav.purchases')}
+        />
       </div>
     </div>
   );

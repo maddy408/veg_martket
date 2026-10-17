@@ -44,7 +44,7 @@ const getApiBaseUrl = () => {
   }
 
   // Default local development URL
-  return 'http://localhost/pos/veg-pos/backend/public/api';
+  return 'http://localhost:8081/api';
 };
 
 export const API_BASE_URL = getApiBaseUrl();

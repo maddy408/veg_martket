@@ -123,6 +123,7 @@ CREATE TABLE IF NOT EXISTS bill_lines (
     amount DECIMAL(12,2) NOT NULL DEFAULT 0,
     line_order INT NOT NULL DEFAULT 0,
     bag_count INT NULL DEFAULT NULL,
+    bag_weights TEXT NULL DEFAULT NULL,
     FOREIGN KEY (bill_id) REFERENCES bills(id) ON DELETE CASCADE,
     FOREIGN KEY (item_id) REFERENCES items(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -136,14 +137,6 @@ CREATE TABLE IF NOT EXISTS held_bills (
     party_id INT NULL,
     created_by INT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE IF NOT EXISTS bill_sequences (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    series_key VARCHAR(30) NOT NULL,
-    prefix VARCHAR(10) NOT NULL,
-    next_number INT NOT NULL DEFAULT 1,
-    UNIQUE KEY uq_bill_sequences_series (series_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS purchases (

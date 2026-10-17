@@ -8,8 +8,6 @@ export default {
       },
       colors: {
         brand: {
-          dark: '#0a1733',
-          border: '#0f224a',
           50: '#f0f6ff',
           100: '#e0edff',
           200: '#c7ddfe',
@@ -21,12 +19,6 @@ export default {
           800: '#0f224a',
           900: '#0a1733',
           950: '#050c1e',
-        },
-        mandi: {
-          DEFAULT: '#0e6037',
-          light: '#e6f4ea',
-          hover: '#0a4729',
-          red: '#dc2626',
         },
       },
     },

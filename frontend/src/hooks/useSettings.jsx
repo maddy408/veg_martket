@@ -2,7 +2,6 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { useTranslation } from 'react-i18next';
 import { getSettings } from '../api/settings';
 import { useAuth } from './useAuth';
-import { isMojibake } from '../utils/format';
 
 const SettingsContext = createContext(null);
 
@@ -40,35 +39,12 @@ export function SettingsProvider({ children }) {
   }, [user, reloadSettings]);
 
   const companyName = (() => {
-    const defaultTamil = 'ஸ்ரீ பவானி காய்கனி கமிஷன் வியாபாரம்';
-    const defaultEn = 'Sri Bhavani Vegetables';
-
-    if (!settings) {
-      return i18n.language === 'ta' ? defaultTamil : defaultEn;
-    }
-
+    if (!settings) return t('app_title');
     const isTamil = i18n.language === 'ta';
     if (isTamil) {
-      const ta = settings.company_name_ta?.trim();
-      if (ta && !isMojibake(ta) && !ta.includes('?')) {
-        return ta;
-      }
-      const en = settings.company_name_en?.trim();
-      if (en && !isMojibake(en)) {
-        return defaultTamil;
-      }
-      return defaultTamil;
+      return settings.company_name_ta?.trim() || settings.company_name_en?.trim() || t('app_title');
     }
-
-    const en = settings.company_name_en?.trim();
-    if (en && !isMojibake(en)) {
-      return en;
-    }
-    const ta = settings.company_name_ta?.trim();
-    if (ta && !isMojibake(ta)) {
-      return ta;
-    }
-    return defaultEn;
+    return settings.company_name_en?.trim() || settings.company_name_ta?.trim() || t('app_title');
   })();
 
   return (

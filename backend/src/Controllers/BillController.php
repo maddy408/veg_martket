@@ -319,16 +319,30 @@ class BillController
             if (!empty($bagWeights) && !$isCharge) {
                 $weight = round(array_sum($bagWeights), 3);
                 $bagWeightsJson = json_encode(array_values($bagWeights));
-                $explicitBags = (int) ($line['bag_count'] ?? ($line['nos'] ?? 0));
-                $bagCount = max($explicitBags, count($bagWeights));
-                $nos = (float) $bagCount;
+
+                $explicitBags = null;
+                if (isset($line['bag_count']) && $line['bag_count'] !== '' && $line['bag_count'] !== null && (int) $line['bag_count'] > 0) {
+                    $explicitBags = (int) $line['bag_count'];
+                } elseif (isset($line['nos']) && $line['nos'] !== '' && $line['nos'] !== null && (float) $line['nos'] > 0) {
+                    $explicitBags = (int) $line['nos'];
+                }
+
+                if ($explicitBags !== null) {
+                    $bagCount = $explicitBags;
+                } elseif (count($bagWeights) > 1) {
+                    $bagCount = count($bagWeights);
+                } else {
+                    $bagCount = null;
+                }
+                $nos = $bagCount !== null ? (float) $bagCount : 0.0;
             } else {
                 $bagCount = null;
-                if (isset($line['bag_count']) && $line['bag_count'] !== '' && $line['bag_count'] !== null) {
+                if (isset($line['bag_count']) && $line['bag_count'] !== '' && $line['bag_count'] !== null && (int) $line['bag_count'] > 0) {
                     $bagCount = (int) $line['bag_count'];
                 } elseif (isset($line['nos']) && $line['nos'] !== '' && $line['nos'] !== null && (float) $line['nos'] > 0) {
                     $bagCount = (int) $line['nos'];
                 }
+                $nos = $isCharge ? (float) ($line['nos'] ?? 0) : ($bagCount !== null ? (float) $bagCount : 0.0);
             }
 
             $amount = round($isCharge ? $rate * $nos : $rate * $weight, 2);

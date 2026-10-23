@@ -269,8 +269,10 @@ export default function Settings() {
                     value={settings.default_print_format}
                     onChange={(e) => field('default_print_format', e.target.value)}
                   >
-                    <option value="a4">A4</option>
+                    <option value="afx">AFX</option>
                     <option value="a5">A5</option>
+                    <option value="slip">Slip</option>
+                    <option value="a4">A4</option>
                     <option value="thermal58">Thermal 58mm</option>
                     <option value="thermal80">Thermal 80mm</option>
                   </select>

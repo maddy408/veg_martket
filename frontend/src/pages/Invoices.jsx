@@ -182,7 +182,7 @@ export default function Invoices() {
         is_charge_item: !!l.is_charge_item,
         rate: Number(l.rate),
         nos: Number(l.nos) || 0,
-        bag_count: l.nos !== '' && l.nos !== null && l.nos !== undefined ? Number(l.nos) : null,
+        bag_count: (l.nos !== '' && l.nos !== null && l.nos !== undefined && !isNaN(Number(l.nos)) && Number(l.nos) > 0) ? Number(l.nos) : null,
         bag_weights: l.bag_weights || null,
         weight: Number(l.weight),
       })),
@@ -294,7 +294,7 @@ export default function Invoices() {
                     {/* Print Icon */}
                     <button
                       className="p-1.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors inline-flex items-center justify-center"
-                      onClick={() => navigate(`/print/bill/${b.id}`)}
+                      onClick={() => navigate(`/print/bill/${b.id}?format=afx`)}
                       title="அச்சிடு (Print)"
                       type="button"
                     >
@@ -540,7 +540,7 @@ export default function Invoices() {
             <div className="flex justify-between items-center pt-2 border-t">
               <button
                 type="button"
-                onClick={() => navigate(`/print/bill/${previewPayload.bill.id}`)}
+                onClick={() => navigate(`/print/bill/${previewPayload.bill.id}?format=afx`)}
                 className="btn-primary text-sm flex items-center gap-1.5"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

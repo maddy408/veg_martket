@@ -50,6 +50,8 @@
   "billing": {
     "location_local": "உள்ளூர்",
     "location_distant": "தூர ஊர்",
+    "location_surandai": "சுரண்டை",
+    "location_kerala": "கேரளா",
     "type_normal": "வழக்கமான பில்",
     "type_commission": "கமிஷன் பில்",
     "select_party": "நபரைத் தேர்ந்தெடு",

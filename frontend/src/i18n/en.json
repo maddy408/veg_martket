@@ -50,6 +50,8 @@
   "billing": {
     "location_local": "Local",
     "location_distant": "Distant",
+    "location_surandai": "Surandai",
+    "location_kerala": "Kerala",
     "type_normal": "Normal Bill",
     "type_commission": "Commission Bill",
     "select_party": "Select party",

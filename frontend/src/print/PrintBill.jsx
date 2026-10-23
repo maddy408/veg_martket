@@ -40,7 +40,7 @@ export default function PrintBill() {
   if (!payload) return <div className="p-8 text-center text-gray-500 font-bold">Loading Invoice...</div>;
 
   const { bill, settings } = payload;
-  const paperFormat = params.get('format') || settings.default_print_format || 'a5';
+  const paperFormat = params.get('format') || settings.default_print_format || 'afx';
   const activeIsCommission = formatMode !== null 
     ? formatMode === 'commission' 
     : bill.bill_type === 'commission';
@@ -93,6 +93,17 @@ export default function PrintBill() {
               ? 'width: 76mm !important; max-width: 76mm !important; min-height: 0 !important;'
               : 'width: 142mm !important; max-width: 142mm !important; min-height: 196mm !important; max-height: 202mm !important; overflow: hidden !important;'}
           }
+          .surandai-bhavani-template > div {
+            flex: 1 1 0% !important;
+            min-height: 100% !important;
+          }
+        }
+        .surandai-bhavani-template {
+          min-height: ${paperFormat === 'slip' ? 'auto' : paperFormat === 'a4' ? '280mm' : '196mm'};
+        }
+        .surandai-bhavani-template > div {
+          flex: 1 1 0%;
+          min-height: 100%;
         }
       `}</style>
 
@@ -159,15 +170,15 @@ export default function PrintBill() {
 
           {/* Paper Size Selector */}
           <div className="flex items-center gap-1.5">
-            {['a5', 'slip', 'a4'].map((f) => (
+            {['afx', 'a5', 'slip', 'a4'].map((f) => (
               <button
                 key={f}
-                className={`px-2.5 py-1 rounded-lg text-xs uppercase font-bold ${
-                  f === paperFormat ? 'bg-slate-900 text-white' : 'bg-gray-100 text-gray-700 border'
+                className={`px-2.5 py-1 rounded-lg text-xs uppercase font-bold transition-all ${
+                  f === paperFormat ? 'bg-slate-900 text-white shadow' : 'bg-gray-100 text-gray-700 border hover:bg-gray-200'
                 }`}
                 onClick={() => setParams({ format: f })}
               >
-                {f === 'a5' ? 'A5' : f === 'slip' ? 'Slip' : 'A4'}
+                {f === 'afx' ? 'AFX' : f === 'a5' ? 'A5' : f === 'slip' ? 'Slip' : 'A4'}
               </button>
             ))}
           </div>

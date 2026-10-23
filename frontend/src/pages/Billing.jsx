@@ -223,7 +223,7 @@ export default function Billing() {
     const targetRow = existingIdx >= 0 ? existingIdx : cart.lines.length;
     pendingFocusRef.current = {
       row: targetRow,
-      field: match.is_charge_item ? 'nos' : 'weight',
+      field: 'rate',
       subIdx: 0,
       select: true,
     };
@@ -1211,10 +1211,12 @@ export default function Billing() {
           unit: l.unit,
           is_charge_item: l.is_charge_item,
           rate: Number(l.rate) || 0,
-          nos: Number(l.nos) || (bagWeights && bagWeights.length > 0 ? bagWeights.length : 0),
-          bag_count: l.nos !== '' && l.nos !== null && l.nos !== undefined
+          nos: (l.nos !== '' && l.nos !== null && l.nos !== undefined && !isNaN(Number(l.nos)))
             ? Number(l.nos)
-            : (bagWeights && bagWeights.length > 0 ? bagWeights.length : null),
+            : (bagWeights && bagWeights.length > 1 ? bagWeights.length : 0),
+          bag_count: (l.nos !== '' && l.nos !== null && l.nos !== undefined && !isNaN(Number(l.nos)) && Number(l.nos) > 0)
+            ? Number(l.nos)
+            : (bagWeights && bagWeights.length > 1 ? bagWeights.length : null),
           bag_weights: bagWeights && bagWeights.length > 0 ? bagWeights : null,
           weight: Number(l.weight) || 0,
           amount: lineAmount(l),
@@ -1242,7 +1244,7 @@ export default function Billing() {
     try {
       const bill = await createBill(buildPayload());
       resetCart();
-      navigate(`/print/bill/${bill.id}`);
+      navigate(`/print/bill/${bill.id}?format=afx`);
     } catch (err) {
       alert(err?.response?.data?.error || 'Save failed');
     } finally {
@@ -1434,8 +1436,8 @@ export default function Billing() {
                   onChange={(e) => setCart({ ...cart, locationType: e.target.value })}
                   onKeyDown={handleLocationKeyDown}
                 >
-                  <option value="local">{t('billing.location_local')}</option>
-                  <option value="distant">{t('billing.location_distant')}</option>
+                  <option value="local">{t('billing.location_surandai')}</option>
+                  <option value="distant">{t('billing.location_kerala')}</option>
                 </select>
               </div>
 

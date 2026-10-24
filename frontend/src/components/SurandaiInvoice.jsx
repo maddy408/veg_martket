@@ -132,65 +132,72 @@ export default function SurandaiInvoice({ bill, settings = {}, isCommissionView,
   const totalDeductionsVal = commissionVal + patthuVal + cooliVal + vadagaiVal + otherDeductionVal;
   const netTotalVal = itemsTotal - totalDeductionsVal;
 
+  const taxVal = Number(bill.tax_amount || bill.tax || 0);
   const rawLines = bill.lines || bill.items || [];
   const isCompact = rawLines.length > 7;
   const isSlip = paperFormat === 'slip';
+  const isAfx = paperFormat === 'afx' || (!isSlip && paperFormat !== 'a5' && paperFormat !== 'a4');
+  const isA5 = paperFormat === 'a5';
+  const isA4 = paperFormat === 'a4';
 
   return (
     <div
-      className={`surandai-bhavani-template font-sans text-black bg-white select-none shadow-sm flex flex-col mx-auto relative border-2 border-[#0e6037] ${
+      className={`surandai-bhavani-template font-sans text-black bg-white select-none shadow-sm flex flex-col mx-auto relative border-[2.5px] border-[#0e6037] ${
         isSlip
           ? 'max-w-[76mm] w-full p-2 text-[10px]'
+          : isAfx
+          ? 'w-[114mm] max-w-[114mm] p-[2.5mm] text-xs'
+          : isA4
+          ? 'max-w-[190mm] w-full p-3 text-sm'
           : 'max-w-[140mm] w-full min-h-[196mm] p-2 text-xs'
       }`}
       style={{
-        minHeight: isSlip ? 'auto' : paperFormat === 'a4' ? '280mm' : '196mm',
-        pageBreakInside: 'avoid',
-        breakInside: 'avoid',
+        minHeight: isSlip ? 'auto' : isA4 ? '280mm' : isAfx ? '192mm' : '196mm',
+        boxSizing: 'border-box',
       }}
     >
       <div className="flex flex-col flex-1 h-full min-h-full">
 
         {/* 1. Top Contact Bar with Center Sacred Inscription (Zero Overlap Guaranteed) */}
-        <div className="grid grid-cols-[28%_44%_28%] items-start pb-0.5 text-[11px] font-bold text-slate-900 leading-tight">
+        <div className="invoice-header-block grid grid-cols-[28%_44%_28%] items-start pb-0.5 text-[11px] font-bold text-slate-900 leading-tight">
           {/* Left: Proprietor & Phone 1 */}
           <div className="text-left leading-tight">
-            <div>{proprietor} :</div>
+            <div className="truncate">{proprietor} :</div>
             {phone1 && <div className="font-mono font-bold tracking-tight text-[11px]">{phone1}</div>}
           </div>
 
           {/* Center: Sacred "உ" & God 1 & God 2 */}
-          <div className="text-center">
+          <div className="text-center px-0.5">
             <div className="text-[11px] font-black text-slate-900 leading-none">உ</div>
-            <div className="text-[10px] font-bold text-[#0e6037] tracking-wide mt-0.5 whitespace-nowrap">{god1}</div>
-            <div className="text-[9.5px] font-bold text-[#0e6037] tracking-wide mt-0.5 whitespace-nowrap">{god2}</div>
+            <div className="text-[10px] font-bold text-[#0e6037] tracking-wide mt-0.5 truncate">{god1}</div>
+            <div className="text-[9.5px] font-bold text-[#0e6037] tracking-wide mt-0.5 truncate">{god2}</div>
           </div>
 
           {/* Right: Cell Phones */}
-          <div className="text-right">
+          <div className="text-right leading-tight">
             <div>Cell : <span className="font-mono font-bold">{phone2}</span></div>
             {phone3 && <div className="font-mono font-bold text-[10px]">{phone3}</div>}
           </div>
         </div>
 
         {/* 2. Badges, Deity Icons & Center Brand Banner */}
-        <div className={`flex items-center justify-between px-1 ${isCompact || isSlip ? 'my-0.5' : 'my-1'}`}>
+        <div className={`invoice-header-block flex items-center justify-between px-0.5 ${isCompact || isSlip || isAfx ? 'my-0.5' : 'my-1'}`}>
           {/* Left Shop No Badge */}
-          <div className={`border-2 border-[#0e6037] rounded overflow-hidden text-center shrink-0 shadow-xs ${isCompact || isSlip ? 'w-10' : 'w-14'}`}>
-            <div className="bg-[#0e6037] text-white text-[8px] font-bold py-0.5 px-1 leading-none whitespace-nowrap">
+          <div className={`border-2 border-[#0e6037] rounded overflow-hidden text-center shrink-0 shadow-xs ${isCompact || isSlip || isAfx ? 'w-11' : 'w-14'}`}>
+            <div className="bg-[#0e6037] text-white text-[7.5px] font-bold py-0.5 px-0.5 leading-none whitespace-nowrap">
               கடை எண்
             </div>
-            <div className={`font-black text-red-600 leading-none font-sans ${isCompact || isSlip ? 'text-base py-0.5' : 'text-xl py-0.5'}`}>
+            <div className={`font-black text-red-600 leading-none font-sans ${isCompact || isSlip || isAfx ? 'text-base py-0.5' : 'text-xl py-0.5'}`}>
               {shopNo1}
             </div>
           </div>
 
           {/* Left Deity Photo (Amman) */}
-          <div className="flex justify-center items-center px-1 shrink-0">
+          <div className="flex justify-center items-center px-0.5 shrink-0">
             <img
               src={GOD_AMMAN_BASE64}
               alt="ஸ்ரீ பவானி அம்மன்"
-              className={`${isCompact || isSlip ? 'h-10 max-w-[34px]' : 'h-14 max-w-[44px]'} w-auto object-contain`}
+              className={`${isCompact || isSlip || isAfx ? 'h-11 max-w-[36px]' : 'h-14 max-w-[44px]'} w-auto object-contain`}
             />
           </div>
 
@@ -198,8 +205,10 @@ export default function SurandaiInvoice({ bill, settings = {}, isCommissionView,
           <div className="text-center flex-1 px-1 min-w-0">
             <div className="my-0.5 inline-block">
               <span
-                className={`inline-block bg-white text-[#6b0505] border-[2.5px] border-[#6b0505] font-serif font-black rounded-full tracking-wider leading-tight shadow-xs ${isCompact || isSlip ? 'text-sm px-3 py-0' : 'text-base px-4 py-0.5'}`}
-                style={{ fontWeight: 900, WebkitTextStroke: '0.35px #6b0505' }}
+                className={`inline-block bg-white text-[#6b0505] border-[2.5px] border-[#6b0505] font-serif font-black rounded-full tracking-widest leading-none shadow-xs ${
+                  isSlip ? 'text-sm px-3 py-0.5' : 'text-lg px-4 py-1'
+                }`}
+                style={{ fontWeight: 900, WebkitTextStroke: '0.4px #6b0505' }}
               >
                 {brandLogo}
               </span>
@@ -207,42 +216,42 @@ export default function SurandaiInvoice({ bill, settings = {}, isCommissionView,
           </div>
 
           {/* Right Deity Photo (Maadasamy) */}
-          <div className="flex justify-center items-center px-1 shrink-0">
+          <div className="flex justify-center items-center px-0.5 shrink-0">
             <img
               src={GOD_MAADASAMY_BASE64}
               alt="ஸ்ரீ பொட்டல் மாடசாமி"
-              className={`${isCompact || isSlip ? 'h-10 max-w-[34px]' : 'h-14 max-w-[44px]'} w-auto object-contain`}
+              className={`${isCompact || isSlip || isAfx ? 'h-11 max-w-[36px]' : 'h-14 max-w-[44px]'} w-auto object-contain`}
             />
           </div>
 
           {/* Right Shop No Badge */}
-          <div className={`border-2 border-[#0e6037] rounded overflow-hidden text-center shrink-0 shadow-xs ${isCompact || isSlip ? 'w-10' : 'w-14'}`}>
-            <div className="bg-[#0e6037] text-white text-[8px] font-bold py-0.5 px-1 leading-none whitespace-nowrap">
+          <div className={`border-2 border-[#0e6037] rounded overflow-hidden text-center shrink-0 shadow-xs ${isCompact || isSlip || isAfx ? 'w-11' : 'w-14'}`}>
+            <div className="bg-[#0e6037] text-white text-[7.5px] font-bold py-0.5 px-0.5 leading-none whitespace-nowrap">
               கடை எண்
             </div>
-            <div className={`font-black text-red-600 leading-none font-sans ${isCompact || isSlip ? 'text-base py-0.5' : 'text-xl py-0.5'}`}>
+            <div className={`font-black text-red-600 leading-none font-sans ${isCompact || isSlip || isAfx ? 'text-base py-0.5' : 'text-xl py-0.5'}`}>
               {shopNo2}
             </div>
           </div>
         </div>
 
         {/* 3. Main Shop Name & Address */}
-        <div className="text-center mt-0.5 mb-1">
+        <div className="invoice-header-block text-center mt-0.5 mb-1">
           <h1
-            className="text-xl font-black text-[#6b0505] tracking-wide font-sans leading-tight"
+            className={`${isAfx ? 'text-lg' : 'text-xl'} font-black text-[#6b0505] tracking-wide font-sans leading-tight`}
             style={{ fontWeight: 900, WebkitTextStroke: '0.45px #6b0505' }}
           >
             {displayName || companyNameTa}
           </h1>
           {(address || location) && (
-            <div className="text-xs font-bold text-[#0e6037] tracking-wider leading-tight mt-0.5">
+            <div className="text-[11px] font-bold text-[#0e6037] tracking-wider leading-tight mt-0.5">
               {[address, location].filter(Boolean).join(', ')}
             </div>
           )}
         </div>
 
-        {/* 4. Customer & Bill No / Date Line (No bottom line) */}
-        <div className="py-1 px-1 my-0.5 flex justify-between items-center text-xs font-bold">
+        {/* 4. Customer & Bill No / Date Line */}
+        <div className="invoice-customer-row py-1 px-1 my-0.5 flex justify-between items-center text-xs font-bold border-b border-[#0e6037]/20 pb-0.5">
           <div className="flex-1 truncate pr-2">
             <span className="text-[#0e6037]">உயர்திரு : </span>
             <span className="font-black text-slate-900 px-0.5">
@@ -266,11 +275,11 @@ export default function SurandaiInvoice({ bill, settings = {}, isCommissionView,
         <table className="w-full border-collapse text-xs border border-[#0e6037] table-fixed">
           <thead>
             <tr className={`${isCommission ? 'bg-white' : 'bg-[#e6f4ea]'} text-[#0e6037] border-b border-[#0e6037] text-center font-bold`}>
-              <th className={`border-r border-[#0e6037] py-1 px-1 w-[15%] ${isCommission ? 'text-center' : 'text-right pr-2'}`}>{lang === 'en' ? 'Rate' : 'விலை'}</th>
-              <th className={`border-r border-[#0e6037] py-1 px-1.5 w-[37%] ${isCommission ? 'text-center' : 'text-left pl-2'}`}>{lang === 'en' ? 'Item' : 'பொருள் விபரம்'}</th>
-              <th className={`border-r border-[#0e6037] py-1 px-1 w-[18%] ${isCommission ? 'text-center' : 'text-right pr-2'}`}>{lang === 'en' ? 'Weight' : 'எடை'}</th>
-              <th className="border-r border-[#0e6037] py-1 px-1 w-[10%] text-center">{lang === 'en' ? 'Bag' : 'பை'}</th>
-              <th className="py-1 px-1 w-[20%] text-center">{lang === 'en' ? 'Amount' : 'தொகை'}</th>
+              <th className={`border-r border-[#0e6037] py-1 px-1 w-[14%] ${isCommission ? 'text-center' : 'text-right pr-1.5'}`}>{lang === 'en' ? 'Rate' : 'விலை'}</th>
+              <th className={`border-r border-[#0e6037] py-1 px-1.5 w-[36%] ${isCommission ? 'text-center' : 'text-left pl-1.5'}`}>{lang === 'en' ? 'Item' : 'பொருள் விபரம்'}</th>
+              <th className={`border-r border-[#0e6037] py-1 px-1 w-[18%] ${isCommission ? 'text-center' : 'text-right pr-1.5'}`}>{lang === 'en' ? 'Weight' : 'எடை'}</th>
+              <th className="border-r border-[#0e6037] py-1 px-0.5 w-[10%] text-center">{lang === 'en' ? 'Bag' : 'பை'}</th>
+              <th className="py-1 px-1 w-[22%] text-center">{lang === 'en' ? 'Amount' : 'தொகை'}</th>
             </tr>
           </thead>
           <tbody>
@@ -304,35 +313,35 @@ export default function SurandaiInvoice({ bill, settings = {}, isCommissionView,
 
               return (
                 <tr key={l.id || l.key || index} className="font-medium align-top">
-                  <td className={`border-r border-[#0e6037] ${isCompact ? 'py-0.5 px-1' : 'py-1 px-1'} ${isCommission ? 'text-center' : 'text-right pr-2'} font-mono font-bold text-xs align-top`}>
+                  <td className={`border-r border-[#0e6037] ${isCompact ? 'py-0.5 px-0.5' : 'py-1 px-1'} ${isCommission ? 'text-center' : 'text-right pr-1.5'} font-mono font-bold text-xs align-top`}>
                     {rateVal > 0 ? rateVal.toFixed(2) : '—'}
                   </td>
-                  <td className={`border-r border-[#0e6037] ${isCompact ? 'py-0.5 px-1' : 'py-1 px-1.5'} text-left align-top pl-2`}>
+                  <td className={`border-r border-[#0e6037] ${isCompact ? 'py-0.5 px-1' : 'py-1 px-1.5'} text-left align-top pl-1.5`}>
                     <div className="font-bold text-xs text-slate-900 leading-snug break-words">
                       {itemName}
                     </div>
                     {weightBreakdownStr && (
-                      <div className="font-mono font-bold text-[11px] text-slate-800 tracking-wide mt-0.5 leading-tight whitespace-normal break-words">
+                      <div className="font-mono font-bold text-[10.5px] text-slate-800 tracking-tight mt-0.5 leading-tight whitespace-normal break-words">
                         {weightBreakdownStr}
                       </div>
                     )}
                   </td>
-                  <td className={`border-r border-[#0e6037] ${isCompact ? 'py-0.5 px-1' : 'py-1 px-1'} ${isCommission ? 'text-center' : 'text-right pr-2'} font-mono font-bold text-xs align-top`}>
+                  <td className={`border-r border-[#0e6037] ${isCompact ? 'py-0.5 px-0.5' : 'py-1 px-1'} ${isCommission ? 'text-center' : 'text-right pr-1.5'} font-mono font-bold text-xs align-top`}>
                     {weightDisplay}
                   </td>
-                  <td className={`border-r border-[#0e6037] ${isCompact ? 'py-0.5 px-1' : 'py-1 px-1'} text-center font-mono font-bold text-xs text-slate-800 align-top`}>
+                  <td className={`border-r border-[#0e6037] ${isCompact ? 'py-0.5 px-0.5' : 'py-1 px-0.5'} text-center font-mono font-bold text-xs text-slate-800 align-top`}>
                     {bagDisplay || ''}
                   </td>
-                  <td className={`${isCompact ? 'py-0.5 px-2' : 'py-1 px-2.5'} text-right font-mono font-bold text-xs text-slate-900 align-top`}>
+                  <td className={`${isCompact ? 'py-0.5 px-1.5' : 'py-1 px-2'} text-right font-mono font-bold text-xs text-slate-900 align-top`}>
                     {amountVal > 0 ? formatIndian(amountVal) : '—'}
                   </td>
                 </tr>
               );
             })}
 
-            {/* In Commission mode: extend the vertical columns down to create the authentic Mandi bill book look */}
-            {isCommission && (
-              <tr style={{ height: `${Math.max(50, 160 - (rawLines.length * 24))}px` }}>
+            {/* In Commission mode: extend the vertical columns down to fill space only for short bills */}
+            {isCommission && !isSlip && rawLines.length < 5 && (
+              <tr style={{ height: `${Math.max(15, 110 - (rawLines.length * 24))}px` }}>
                 <td className="border-r border-[#0e6037]"></td>
                 <td className="border-r border-[#0e6037]"></td>
                 <td className="border-r border-[#0e6037]"></td>
@@ -347,22 +356,21 @@ export default function SurandaiInvoice({ bill, settings = {}, isCommissionView,
                 {/* 1. விற்பனை தொகை : (Sales Total) */}
                 <tr className="border-t border-[#0e6037] font-bold">
                   <td className="border-r border-[#0e6037]"></td>
-                  <td colSpan={3} className="border-r border-[#0e6037] py-0.5 px-3 text-right font-bold text-xs text-slate-800 whitespace-nowrap">
+                  <td colSpan={3} className="border-r border-[#0e6037] py-0.5 px-2.5 text-right font-bold text-xs text-slate-800 whitespace-nowrap">
                     {lang === 'en' ? 'Sales Total :' : 'விற்பனை தொகை :'}
                   </td>
-                  <td className="py-0.5 px-2.5 text-right font-mono font-bold text-xs text-slate-900">
+                  <td className="py-0.5 px-2 text-right font-mono font-bold text-xs text-slate-900">
                     {formatIndian(itemsTotal)}
                   </td>
                 </tr>
 
-                {/* 2. Expense / Commission Detail Rows (Centered) */}
-                {/* கமிஷன் (No percentage display) */}
+                {/* 2. Expense / Commission Detail Rows */}
                 <tr className="font-bold">
                   <td className="border-r border-[#0e6037]"></td>
-                  <td colSpan={2} className="border-r border-[#0e6037] py-0.5 px-2.5 text-left font-bold text-xs text-red-700 whitespace-nowrap">
+                  <td className="py-0.5 px-2 text-left font-bold text-xs text-red-700 whitespace-nowrap">
                     {lang === 'en' ? 'Commission :' : 'கமிஷன் :'}
                   </td>
-                  <td className="border-r border-[#0e6037] py-0.5 px-2 text-right font-mono font-bold text-xs text-slate-900">
+                  <td colSpan={2} className="border-r border-[#0e6037] py-0.5 px-2 text-right font-mono font-bold text-xs text-slate-900 whitespace-nowrap">
                     {formatIndian(commissionVal)}
                   </td>
                   <td></td>
@@ -372,10 +380,10 @@ export default function SurandaiInvoice({ bill, settings = {}, isCommissionView,
                 {patthuVal > 0 && (
                   <tr className="font-bold">
                     <td className="border-r border-[#0e6037]"></td>
-                    <td colSpan={2} className="border-r border-[#0e6037] py-0.5 px-2.5 text-left font-bold text-xs text-red-700 whitespace-nowrap">
+                    <td className="py-0.5 px-2 text-left font-bold text-xs text-red-700 whitespace-nowrap">
                       {lang === 'en' ? 'Patthu :' : 'பற்று :'}
                     </td>
-                    <td className="border-r border-[#0e6037] py-0.5 px-2 text-right font-mono font-bold text-xs text-slate-900">
+                    <td colSpan={2} className="border-r border-[#0e6037] py-0.5 px-2 text-right font-mono font-bold text-xs text-slate-900 whitespace-nowrap">
                       {formatIndian(patthuVal)}
                     </td>
                     <td></td>
@@ -385,10 +393,10 @@ export default function SurandaiInvoice({ bill, settings = {}, isCommissionView,
                 {/* கூலி */}
                 <tr className="font-bold">
                   <td className="border-r border-[#0e6037]"></td>
-                  <td colSpan={2} className="border-r border-[#0e6037] py-0.5 px-2.5 text-left font-bold text-xs text-red-700 whitespace-nowrap">
+                  <td className="py-0.5 px-2 text-left font-bold text-xs text-red-700 whitespace-nowrap">
                     {lang === 'en' ? 'Cooli :' : 'கூலி :'}
                   </td>
-                  <td className="border-r border-[#0e6037] py-0.5 px-2 text-right font-mono font-bold text-xs text-slate-900">
+                  <td colSpan={2} className="border-r border-[#0e6037] py-0.5 px-2 text-right font-mono font-bold text-xs text-slate-900 whitespace-nowrap">
                     {formatIndian(cooliVal)}
                   </td>
                   <td></td>
@@ -397,22 +405,22 @@ export default function SurandaiInvoice({ bill, settings = {}, isCommissionView,
                 {/* வாடகை */}
                 <tr className="font-bold">
                   <td className="border-r border-[#0e6037]"></td>
-                  <td colSpan={2} className="border-r border-[#0e6037] py-0.5 px-2.5 text-left font-bold text-xs text-red-700 whitespace-nowrap">
+                  <td className="py-0.5 px-2 text-left font-bold text-xs text-red-700 whitespace-nowrap">
                     {lang === 'en' ? 'Vadagai :' : 'வாடகை :'}
                   </td>
-                  <td className="border-r border-[#0e6037] py-0.5 px-2 text-right font-mono font-bold text-xs text-slate-900">
+                  <td colSpan={2} className="border-r border-[#0e6037] py-0.5 px-2 text-right font-mono font-bold text-xs text-slate-900 whitespace-nowrap">
                     {formatIndian(vadagaiVal)}
                   </td>
                   <td></td>
                 </tr>
 
-                {/* 3. கழிவுகள் மொத்தம் : (No line above) */}
+                {/* 3. கழிவுகள் மொத்தம் : */}
                 <tr className="font-bold text-red-700">
                   <td className="border-r border-[#0e6037]"></td>
-                  <td colSpan={3} className="border-r border-[#0e6037] py-0.5 px-3 text-right font-bold text-xs text-red-700 whitespace-nowrap">
+                  <td colSpan={3} className="border-r border-[#0e6037] py-0.5 px-2.5 text-right font-bold text-xs text-red-700 whitespace-nowrap">
                     {lang === 'en' ? 'Total Deductions :' : 'கழிவுகள் மொத்தம் :'}
                   </td>
-                  <td className="py-0.5 px-2.5 text-right font-mono font-bold text-xs text-red-700">
+                  <td className="py-0.5 px-2 text-right font-mono font-bold text-xs text-red-700">
                     (-) {formatIndian(totalDeductionsVal)}
                   </td>
                 </tr>
@@ -420,10 +428,10 @@ export default function SurandaiInvoice({ bill, settings = {}, isCommissionView,
                 {/* 4. மொத்தம் ரூ = (Final Net Total) */}
                 <tr className="border-t-2 border-[#0e6037] font-black">
                   <td className="border-r border-[#0e6037]"></td>
-                  <td colSpan={3} className="border-r border-[#0e6037] py-1 px-3 text-right font-black text-sm text-[#0e6037] whitespace-nowrap">
+                  <td colSpan={3} className="border-r border-[#0e6037] py-1 px-2.5 text-right font-black text-sm text-[#0e6037] whitespace-nowrap">
                     {lang === 'en' ? 'Net Total :' : 'மொத்தம் ரூ ='}
                   </td>
-                  <td className="py-1 px-2.5 text-right font-mono font-black text-sm text-[#0e6037]">
+                  <td className="py-1 px-2 text-right font-mono font-black text-sm text-[#0e6037]">
                     {formatIndian(netTotalVal)}
                   </td>
                 </tr>
@@ -433,21 +441,31 @@ export default function SurandaiInvoice({ bill, settings = {}, isCommissionView,
               <>
                 {discountVal > 0 && (
                   <tr className="border-t border-[#0e6037] text-rose-700 font-bold bg-rose-50/40">
-                    <td className="border-r border-[#0e6037] py-1 px-3 text-right text-xs" colSpan={4}>
+                    <td className="border-r border-[#0e6037] py-1 px-2.5 text-right text-xs" colSpan={4}>
                       {lang === 'en' ? 'Discount :' : 'தள்ளுபடி :'}
                     </td>
-                    <td className="py-1 px-2.5 text-right font-mono font-bold text-xs">
+                    <td className="py-1 px-2 text-right font-mono font-bold text-xs">
                       (-) {formatIndian(discountVal)}
+                    </td>
+                  </tr>
+                )}
+                {taxVal > 0 && (
+                  <tr className="border-t border-[#0e6037] text-slate-800 font-bold bg-slate-50/50">
+                    <td className="border-r border-[#0e6037] py-1 px-2.5 text-right text-xs" colSpan={4}>
+                      {lang === 'en' ? 'Tax / GST :' : 'வரி / GST :'}
+                    </td>
+                    <td className="py-1 px-2 text-right font-mono font-bold text-xs">
+                      (+) {formatIndian(taxVal)}
                     </td>
                   </tr>
                 )}
                 {/* 1. மொத்தம் (Total) */}
                 <tr className="font-black bg-[#e6f4ea] border-t-2 border-[#0e6037]">
-                  <td className="border-r border-[#0e6037] py-1.5 px-3 text-right font-black text-sm text-[#0e6037]" colSpan={4}>
+                  <td className="border-r border-[#0e6037] py-1.5 px-2.5 text-right font-black text-sm text-[#0e6037]" colSpan={4}>
                     {lang === 'en' ? 'Total :' : 'மொத்தம் :'}
                   </td>
-                  <td className="py-1.5 px-2.5 text-right font-mono font-black text-sm text-[#0e6037]">
-                    {formatIndian(todayBillTotal)}
+                  <td className="py-1.5 px-2 text-right font-mono font-black text-sm text-[#0e6037]">
+                    {formatIndian(todayBillTotal + taxVal)}
                   </td>
                 </tr>
 
@@ -459,7 +477,7 @@ export default function SurandaiInvoice({ bill, settings = {}, isCommissionView,
                         {lang === 'en' ? 'Previous Balance' : 'முன் பற்று'}
                       </div>
                       <div className="col-span-1 text-center font-mono">:</div>
-                      <div className="col-span-6 text-right font-mono font-bold pr-2.5 text-slate-900">
+                      <div className="col-span-6 text-right font-mono font-bold pr-2 text-slate-900">
                         {formatIndian(munPartru)}
                       </div>
 
@@ -467,7 +485,7 @@ export default function SurandaiInvoice({ bill, settings = {}, isCommissionView,
                         {lang === 'en' ? 'Received' : 'வரவு'}
                       </div>
                       <div className="col-span-1 text-center font-mono">:</div>
-                      <div className="col-span-6 text-right font-mono font-bold pr-2.5 text-slate-900">
+                      <div className="col-span-6 text-right font-mono font-bold pr-2 text-slate-900">
                         {formatIndian(varavu)}
                       </div>
 
@@ -477,8 +495,8 @@ export default function SurandaiInvoice({ bill, settings = {}, isCommissionView,
                       <div className="col-span-1 text-center font-mono text-sm text-[#0e6037] font-black pt-1 border-t border-[#0e6037]">
                         :
                       </div>
-                      <div className="col-span-6 text-right font-mono font-black text-sm text-[#0e6037] pr-2.5 pt-1 border-t border-[#0e6037]">
-                        {formatIndian(todayBillTotal + munPartru - varavu)}
+                      <div className="col-span-6 text-right font-mono font-black text-sm text-[#0e6037] pr-2 pt-1 border-t border-[#0e6037]">
+                        {formatIndian(todayBillTotal + taxVal + munPartru - varavu)}
                       </div>
                     </div>
                   </td>
@@ -491,15 +509,27 @@ export default function SurandaiInvoice({ bill, settings = {}, isCommissionView,
         {/* Bottom Section */}
         {isCommission ? (
           /* Commission Bill Bottom: Clean rounded stamp/seal outline box at bottom-left */
-          <div className="pt-2 pb-0.5">
+          <div className="invoice-footer-block pt-1.5 pb-0.5 flex items-center justify-between">
             <div className="w-28 h-7 border border-gray-300 rounded-md" />
+            {footerNote && (
+              <div className="text-[10px] text-gray-500 font-medium italic">
+                {footerNote}
+              </div>
+            )}
           </div>
         ) : (
-          bill.notes && (
-            <div className="mt-1 text-[10px] text-gray-600 italic px-1">
-              {lang === 'en' ? 'Notes:' : 'குறிப்பு:'} {bill.notes}
-            </div>
-          )
+          <div className="invoice-footer-block">
+            {bill.notes && (
+              <div className="mt-1 text-[10px] text-gray-600 italic px-1">
+                {lang === 'en' ? 'Notes:' : 'குறிப்பு:'} {bill.notes}
+              </div>
+            )}
+            {footerNote && (
+              <div className="text-center text-[10px] text-gray-500 font-medium italic mt-1">
+                {footerNote}
+              </div>
+            )}
+          </div>
         )}
 
       </div>

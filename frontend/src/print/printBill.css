@@ -1,0 +1,138 @@
+/* ==========================================================================
+   Custom AFX Paper Size (120mm x 200mm) Dedicated Print Stylesheet
+   POS Bill Printing - Compatible with Google Chrome on Windows
+   ========================================================================== */
+
+/* 1. Global Page Geometry for Custom AFX Paper (120mm width x 200mm height) */
+@page {
+  size: 120mm 200mm;
+  margin: 0;
+}
+
+/* 2. Print Media Rules */
+@media print {
+  /* Hide navigation, buttons, toolbars, backdrop, banners, and non-printable elements */
+  .no-print,
+  #goog-gt-tt,
+  .goog-te-banner-frame,
+  div[style*="position: fixed"]:not(.print-watermark),
+  nav,
+  header,
+  footer:not(.print-footer),
+  button,
+  .modal-backdrop,
+  .pwa-banner,
+  .pwa-install-banner {
+    display: none !important;
+  }
+
+  /* Reset document root and viewport for exact 1:1 physical dimensions */
+  html,
+  body {
+    width: 120mm !important;
+    min-width: 120mm !important;
+    max-width: 120mm !important;
+    height: auto !important;
+    min-height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Outer page wrapper reset */
+  .print-page-wrapper {
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    width: 120mm !important;
+  }
+
+  /* Bill container: centered with safe printable margins */
+  .print-container {
+    padding: 0 !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 120mm !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    justify-content: center !important;
+  }
+
+  /* Main invoice template container */
+  .surandai-bhavani-template {
+    width: 114mm !important;
+    min-width: 114mm !important;
+    max-width: 114mm !important;
+    box-sizing: border-box !important;
+    margin: 2mm auto !important;
+    padding: 2.5mm !important;
+    border: 2.5px solid #0e6037 !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+
+    /* Multipage support: fits on 200mm page safely with borders visible, flows to next page when needed */
+    min-height: 192mm !important;
+    max-height: none !important;
+    overflow: visible !important;
+    page-break-after: auto !important;
+    break-after: auto !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+
+  /* Allow inner flex wrapper to paginate naturally across pages */
+  .surandai-bhavani-template > div {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 100% !important;
+    height: auto !important;
+  }
+
+  /* Keep top branding and shop info intact on page 1 */
+  .invoice-header-block,
+  .invoice-customer-row {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Table structure & pagination across pages */
+  .surandai-bhavani-template table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+    box-sizing: border-box !important;
+  }
+
+  .surandai-bhavani-template thead {
+    display: table-header-group !important;
+  }
+
+  .surandai-bhavani-template tbody {
+    display: table-row-group !important;
+  }
+
+  /* Prevent individual items from getting chopped mid-row across page breaks */
+  .surandai-bhavani-template tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Keep totals, deductions, and summary blocks intact */
+  .invoice-totals-section,
+  .invoice-summary-box,
+  .invoice-footer-block {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .surandai-bhavani-template td,
+  .surandai-bhavani-template th {
+    box-sizing: border-box !important;
+    word-break: break-word !important;
+  }
+}

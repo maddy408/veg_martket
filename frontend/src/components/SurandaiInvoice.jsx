@@ -253,21 +253,21 @@ export default function SurandaiInvoice({ bill, settings = {}, isCommissionView,
         {/* 4. Customer & Bill No / Date Line */}
         <div className="invoice-customer-row py-1 px-1 my-0.5 flex justify-between items-center text-xs font-bold border-b border-[#0e6037]/20 pb-0.5">
           <div className="flex-1 truncate pr-2">
-            <span className="text-[#0e6037]">உயர்திரு : </span>
+            <span className="text-[#0e6037]">{lang === 'en' ? 'To : ' : 'உயர்திரு : '}</span>
             <span className="font-black text-slate-900 px-0.5">
-              {customerName || 'வாடிக்கையாளர்'}
+              {customerName || (lang === 'en' ? 'Customer' : 'வாடிக்கையாளர்')}
             </span>
           </div>
-          <div className="text-right shrink-0 flex items-center gap-1.5 font-bold text-xs text-slate-900">
-            {isCommission ? (
-              <span>தேதி : <strong className="font-mono text-slate-900">{formattedDate}</strong></span>
-            ) : (
-              <>
-                <span>பில்: <strong className="font-mono text-slate-900">{billNo}</strong></span>
-                <span>•</span>
-                <span>தேதி: <strong className="font-mono text-slate-900">{formattedDate}</strong></span>
-              </>
-            )}
+
+          <div className="text-right shrink-0 flex flex-col items-end font-bold text-xs text-slate-900 leading-tight">
+            <div>
+              <span>{lang === 'en' ? 'Bill: ' : 'பில்: '}</span>
+              <strong className="font-mono text-slate-900">{billNo}</strong>
+            </div>
+            <div className="mt-0.5">
+              <span>{lang === 'en' ? 'Date: ' : 'தேதி: '}</span>
+              <strong className="font-mono text-slate-900">{formattedDate}</strong>
+            </div>
           </div>
         </div>
 
@@ -357,7 +357,6 @@ export default function SurandaiInvoice({ bill, settings = {}, isCommissionView,
                 <tr className="border-t border-[#0e6037] font-bold">
                   <td className="border-r border-[#0e6037]"></td>
                   <td colSpan={3} className="border-r border-[#0e6037] py-0.5 px-2.5 text-right font-bold text-xs text-slate-800 whitespace-nowrap">
-                    {lang === 'en' ? 'Sales Total :' : 'விற்பனை தொகை :'}
                   </td>
                   <td className="py-0.5 px-2 text-right font-mono font-bold text-xs text-slate-900">
                     {formatIndian(itemsTotal)}
@@ -418,7 +417,6 @@ export default function SurandaiInvoice({ bill, settings = {}, isCommissionView,
                 <tr className="font-bold text-red-700">
                   <td className="border-r border-[#0e6037]"></td>
                   <td colSpan={3} className="border-r border-[#0e6037] py-0.5 px-2.5 text-right font-bold text-xs text-red-700 whitespace-nowrap">
-                    {lang === 'en' ? 'Total Deductions :' : 'கழிவுகள் மொத்தம் :'}
                   </td>
                   <td className="py-0.5 px-2 text-right font-mono font-bold text-xs text-red-700">
                     (-) {formatIndian(totalDeductionsVal)}

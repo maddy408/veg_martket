@@ -2,32 +2,26 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { listParties, createParty, updateParty, deleteParty, getPartyLedger } from '../api/parties';
 import { formatINR, formatDateDMY } from '../utils/format';
-import Pagination from '../components/Pagination';
 
 const BLANK = { name: '', phone: '', place: '', type: 'customer', opening_balance: 0 };
 
 export default function Parties() {
   const { t } = useTranslation();
   const [parties, setParties] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
   const [q, setQ] = useState('');
   const [form, setForm] = useState(null);
   const [ledgerParty, setLedgerParty] = useState(null);
   const [ledger, setLedger] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  function load(p = page) {
+  function load() {
     setLoading(true);
-    listParties({ q, page: p, limit: 10 })
+    listParties({ q })
       .then((res) => {
-        if (res && res.data) {
-          setParties(res.data);
-          setTotal(res.total);
-          setPage(res.page);
-        } else if (Array.isArray(res)) {
+        if (Array.isArray(res)) {
           setParties(res);
-          setTotal(res.length);
+        } else if (res && res.data) {
+          setParties(res.data);
         }
       })
       .catch((err) => {
@@ -37,8 +31,7 @@ export default function Parties() {
   }
 
   useEffect(() => {
-    setPage(1);
-    load(1);
+    load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
 
@@ -50,16 +43,14 @@ export default function Parties() {
       await createParty(form);
     }
     setForm(null);
-    load(page);
+    load();
   }
 
   async function handleDelete(id) {
     if (!window.confirm(t('common.confirm_delete') || 'Are you sure you want to delete this party?')) return;
     try {
       await deleteParty(id);
-      const targetPage = parties.length === 1 && page > 1 ? page - 1 : page;
-      setPage(targetPage);
-      load(targetPage);
+      load();
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.error || 'Failed to delete party');
@@ -89,9 +80,9 @@ export default function Parties() {
       />
 
       <div className="card overflow-hidden p-0">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[calc(100vh-230px)] overflow-y-auto">
           <table className="data-table">
-            <thead>
+            <thead className="sticky top-0 bg-gray-50 z-10 shadow-2xs">
               <tr>
                 <th>{t('common.name')}</th>
                 <th>{t('common.phone')}</th>
@@ -158,16 +149,14 @@ export default function Parties() {
           </table>
         </div>
 
-        <Pagination
-          page={page}
-          total={total}
-          limit={10}
-          onPageChange={(p) => {
-            setPage(p);
-            load(p);
-          }}
-          label={t('nav.parties')}
-        />
+        <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50/70 px-4 py-2.5 text-xs select-none">
+          <span className="text-gray-700 font-medium">
+            {t('common.total') || 'மொத்தம்'}: <span className="font-bold text-blue-900">{parties.length}</span> {t('nav.parties')}
+          </span>
+          <span className="text-gray-400 text-[11px]">
+            {parties.length > 0 && '(Scroll to view all)'}
+          </span>
+        </div>
       </div>
 
       {form && (

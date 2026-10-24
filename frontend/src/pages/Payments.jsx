@@ -3,15 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { listParties, getUnpaidDocuments } from '../api/parties';
 import { listPaymentMethods, createPayment, listPayments } from '../api/payments';
 import { formatINR, formatDateDMY, todayISO } from '../utils/format';
-import Pagination from '../components/Pagination';
 
 export default function Payments() {
   const { t } = useTranslation();
   const [parties, setParties] = useState([]);
   const [methods, setMethods] = useState([]);
   const [history, setHistory] = useState([]);
-  const [totalHistory, setTotalHistory] = useState(0);
-  const [historyPage, setHistoryPage] = useState(1);
   const [direction, setDirection] = useState('in');
   const [partyId, setPartyId] = useState('');
   const [amount, setAmount] = useState('');
@@ -29,22 +26,18 @@ export default function Payments() {
     loadHistory();
   }, []);
 
-  function loadHistory(p = historyPage) {
-    listPayments({ direction, page: p, limit: 10 }).then((res) => {
-      if (res && res.data) {
-        setHistory(res.data);
-        setTotalHistory(res.total);
-        setHistoryPage(res.page);
-      } else if (Array.isArray(res)) {
+  function loadHistory() {
+    listPayments({ direction }).then((res) => {
+      if (Array.isArray(res)) {
         setHistory(res);
-        setTotalHistory(res.length);
+      } else if (res && res.data) {
+        setHistory(res.data);
       }
     });
   }
 
   useEffect(() => {
-    setHistoryPage(1);
-    loadHistory(1);
+    loadHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [direction]);
 
@@ -239,11 +232,11 @@ export default function Payments() {
       <div className="card overflow-hidden p-0">
         <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
           <h3 className="font-semibold text-sm text-slate-800">{t('payments.receipt')} History</h3>
-          <span className="text-xs font-bold text-gray-500">{totalHistory} records</span>
+          <span className="text-xs font-bold text-gray-500">{history.length} records</span>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[calc(100vh-320px)] overflow-y-auto">
           <table className="data-table">
-            <thead>
+            <thead className="sticky top-0 bg-gray-50 z-10 shadow-2xs">
               <tr>
                 <th>{t('payments.receipt')}</th>
                 <th>{t('common.date')}</th>
@@ -273,16 +266,14 @@ export default function Payments() {
           </table>
         </div>
 
-        <Pagination
-          page={historyPage}
-          total={totalHistory}
-          limit={10}
-          onPageChange={(p) => {
-            setHistoryPage(p);
-            loadHistory(p);
-          }}
-          label={t('payments.receipt')}
-        />
+        <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50/70 px-4 py-2.5 text-xs select-none">
+          <span className="text-gray-700 font-medium">
+            {t('common.total') || 'மொத்தம்'}: <span className="font-bold text-blue-900">{history.length}</span> {t('payments.receipt')}
+          </span>
+          <span className="text-gray-400 text-[11px]">
+            {history.length > 0 && '(Scroll to view all)'}
+          </span>
+        </div>
       </div>
     </div>
   );

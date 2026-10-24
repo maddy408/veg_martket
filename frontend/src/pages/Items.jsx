@@ -1,30 +1,24 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { listItems, createItem, updateItem, deleteItem } from '../api/items';
-import Pagination from '../components/Pagination';
 
 const BLANK = { name_ta: '', name_en: '', code: '', unit: 'kg', default_rate: '', is_charge_item: false, active: true };
 
 export default function Items() {
   const { t } = useTranslation();
   const [items, setItems] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
   const [q, setQ] = useState('');
   const [form, setForm] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  function load(p = page) {
+  function load() {
     setLoading(true);
-    listItems({ q, active_only: '0', page: p, limit: 10 })
+    listItems({ q, active_only: '0' })
       .then((res) => {
-        if (res && res.data) {
-          setItems(res.data);
-          setTotal(res.total);
-          setPage(res.page);
-        } else if (Array.isArray(res)) {
+        if (Array.isArray(res)) {
           setItems(res);
-          setTotal(res.length);
+        } else if (res && res.data) {
+          setItems(res.data);
         }
       })
       .catch((err) => {
@@ -34,8 +28,7 @@ export default function Items() {
   }
 
   useEffect(() => {
-    setPage(1);
-    load(1);
+    load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
 
@@ -48,16 +41,14 @@ export default function Items() {
       await createItem(payload);
     }
     setForm(null);
-    load(page);
+    load();
   }
 
   async function handleDelete(id) {
     if (!window.confirm(t('common.confirm_delete') || 'Are you sure you want to delete this item?')) return;
     try {
       await deleteItem(id);
-      const targetPage = items.length === 1 && page > 1 ? page - 1 : page;
-      setPage(targetPage);
-      load(targetPage);
+      load();
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.error || 'Failed to delete item');
@@ -81,9 +72,9 @@ export default function Items() {
       />
 
       <div className="card overflow-hidden p-0">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[calc(100vh-230px)] overflow-y-auto">
           <table className="data-table">
-            <thead>
+            <thead className="sticky top-0 bg-gray-50 z-10 shadow-2xs">
               <tr>
                 <th>{t('items.code')}</th>
                 <th>{t('items.name_ta')}</th>
@@ -142,16 +133,14 @@ export default function Items() {
           </table>
         </div>
 
-        <Pagination
-          page={page}
-          total={total}
-          limit={10}
-          onPageChange={(p) => {
-            setPage(p);
-            load(p);
-          }}
-          label={t('nav.items')}
-        />
+        <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50/70 px-4 py-2.5 text-xs select-none">
+          <span className="text-gray-700 font-medium">
+            {t('common.total') || 'மொத்தம்'}: <span className="font-bold text-blue-900">{items.length}</span> {t('nav.items')}
+          </span>
+          <span className="text-gray-400 text-[11px]">
+            {items.length > 0 && '(Scroll to view all)'}
+          </span>
+        </div>
       </div>
 
       {form && (

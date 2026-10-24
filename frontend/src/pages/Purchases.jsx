@@ -5,7 +5,6 @@ import { listParties } from '../api/parties';
 import { listPaymentMethods } from '../api/payments';
 import { listPurchases, createPurchase, deletePurchase } from '../api/purchases';
 import { formatINR, formatDateDMY, todayISO } from '../utils/format';
-import Pagination from '../components/Pagination';
 
 export default function Purchases() {
   const { t } = useTranslation();
@@ -13,8 +12,6 @@ export default function Purchases() {
   const [parties, setParties] = useState([]);
   const [methods, setMethods] = useState([]);
   const [purchases, setPurchases] = useState([]);
-  const [totalPurchases, setTotalPurchases] = useState(0);
-  const [purchasePage, setPurchasePage] = useState(1);
   const [partyId, setPartyId] = useState('');
   const [date, setDate] = useState(todayISO());
   const [lines, setLines] = useState([]);
@@ -44,15 +41,12 @@ export default function Purchases() {
     listParties({ type: 'supplier' }).then(setParties);
   }
 
-  function reload(p = purchasePage) {
-    listPurchases({ page: p, limit: 10 }).then((res) => {
-      if (res && res.data) {
-        setPurchases(res.data);
-        setTotalPurchases(res.total);
-        setPurchasePage(res.page);
-      } else if (Array.isArray(res)) {
+  function reload() {
+    listPurchases().then((res) => {
+      if (Array.isArray(res)) {
         setPurchases(res);
-        setTotalPurchases(res.length);
+      } else if (res && res.data) {
+        setPurchases(res.data);
       }
     });
     loadParties();
@@ -507,12 +501,12 @@ export default function Purchases() {
       <div className="card overflow-hidden p-0 shadow-sm border border-gray-200">
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
           <h2 className="text-base font-bold text-gray-900">சமீபத்திய கொள்முதல் பட்டியல் (Recent Purchases)</h2>
-          <span className="text-xs font-bold text-gray-500">{totalPurchases} பதிவுகள் (Records)</span>
+          <span className="text-xs font-bold text-gray-500">{purchases.length} பதிவுகள் (Records)</span>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[calc(100vh-320px)] overflow-y-auto">
         <table className="data-table w-full">
-          <thead>
+          <thead className="sticky top-0 bg-slate-100 z-10 shadow-2xs">
             <tr className="bg-slate-100 text-slate-700 font-bold text-xs uppercase">
               <th>{t('purchases.purchase_no')}</th>
               <th>{t('common.date')}</th>
@@ -565,16 +559,14 @@ export default function Purchases() {
         </table>
         </div>
 
-        <Pagination
-          page={purchasePage}
-          total={totalPurchases}
-          limit={10}
-          onPageChange={(p) => {
-            setPurchasePage(p);
-            reload(p);
-          }}
-          label={t('nav.purchases')}
-        />
+        <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50/70 px-4 py-2.5 text-xs select-none">
+          <span className="text-gray-700 font-medium">
+            {t('common.total') || 'மொத்தம்'}: <span className="font-bold text-blue-900">{purchases.length}</span> {t('nav.purchases')}
+          </span>
+          <span className="text-gray-400 text-[11px]">
+            {purchases.length > 0 && '(Scroll to view all)'}
+          </span>
+        </div>
       </div>
     </div>
   );

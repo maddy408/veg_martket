@@ -205,10 +205,14 @@ export default function SurandaiInvoice({ bill, settings = {}, isCommissionView,
           <div className="text-center flex-1 px-1 min-w-0">
             <div className="my-0.5 inline-block">
               <span
-                className={`inline-block bg-white text-[#6b0505] border-[2.5px] border-[#6b0505] font-serif font-black rounded-full tracking-widest leading-none shadow-xs ${
-                  isSlip ? 'text-sm px-3 py-0.5' : 'text-lg px-4 py-1'
+                className={`inline-block bg-white text-[#6b0505] border-[#6b0505] font-serif font-black rounded-full tracking-widest leading-none shadow-xs ${
+                  isSlip
+                    ? 'text-base px-3.5 py-1 border-[2.5px]'
+                    : isA4
+                    ? 'text-3xl px-6 py-2 border-[3.5px]'
+                    : 'text-2xl px-5 py-1.5 border-[3px]'
                 }`}
-                style={{ fontWeight: 900, WebkitTextStroke: '0.4px #6b0505' }}
+                style={{ fontWeight: 900, WebkitTextStroke: '0.5px #6b0505' }}
               >
                 {brandLogo}
               </span>

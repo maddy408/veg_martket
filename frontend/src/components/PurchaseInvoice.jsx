@@ -135,7 +135,7 @@ export default function PurchaseInvoice({ purchase, settings = {}, lang = 'ta' }
 
           {/* Center Red Oval VTC Logo - EXACT 50% CENTER */}
           <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center pointer-events-none">
-            <span className="inline-block bg-[#dc2626] text-white font-serif font-black text-lg px-4 py-0.5 rounded-full tracking-wider shadow-sm border border-red-700 leading-tight">
+            <span className="inline-block bg-[#dc2626] text-white font-serif font-black text-2xl px-5 py-1 rounded-full tracking-wider shadow-sm border-2 border-red-700 leading-tight">
               {brandLogo}
             </span>
           </div>

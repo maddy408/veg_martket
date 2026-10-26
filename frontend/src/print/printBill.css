@@ -26,14 +26,14 @@
     display: none !important;
   }
 
-  /* Reset document root and viewport for exact 1:1 physical dimensions */
+  /* Reset document root and viewport for exact 1:1 physical dimensions without extra blank pages */
   html,
   body {
     width: 120mm !important;
     min-width: 120mm !important;
     max-width: 120mm !important;
     height: auto !important;
-    min-height: 100% !important;
+    min-height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #ffffff !important;
@@ -50,17 +50,17 @@
     min-height: 0 !important;
     height: auto !important;
     width: 120mm !important;
+    display: block !important;
   }
 
-  /* Bill container: centered with safe printable margins */
+  /* Bill container: standard block layout to prevent Chromium flexbox fragmentation bug */
   .print-container {
     padding: 0 !important;
     margin: 0 auto !important;
     width: 100% !important;
     max-width: 120mm !important;
     box-sizing: border-box !important;
-    display: flex !important;
-    justify-content: center !important;
+    display: block !important;
   }
 
   /* Main invoice template container */
@@ -69,35 +69,110 @@
     min-width: 114mm !important;
     max-width: 114mm !important;
     box-sizing: border-box !important;
-    margin: 2mm auto !important;
-    padding: 2.5mm !important;
-    border: 2.5px solid #0e6037 !important;
+    margin: 3mm auto 2mm auto !important;
+    padding: 2mm !important;
+    border: 2px solid #0e6037 !important;
     box-shadow: none !important;
     background: #ffffff !important;
+    display: block !important;
 
-    /* Multipage support: fits on 200mm page safely with borders visible, flows to next page when needed */
-    min-height: 192mm !important;
+    /* Natural pagination: starts at top of page 1, flows naturally when multi-page */
+    min-height: auto !important;
+    height: auto !important;
     max-height: none !important;
     overflow: visible !important;
+    page-break-before: avoid !important;
+    break-before: avoid !important;
     page-break-after: auto !important;
     break-after: auto !important;
     page-break-inside: auto !important;
     break-inside: auto !important;
   }
 
-  /* Allow inner flex wrapper to paginate naturally across pages */
+  /* Allow inner wrapper to use standard block layout instead of flexbox for reliable Blink pagination */
   .surandai-bhavani-template > div {
-    display: flex !important;
-    flex-direction: column !important;
-    min-height: 100% !important;
+    display: block !important;
+    min-height: 0 !important;
     height: auto !important;
+    max-height: none !important;
   }
 
-  /* Keep top branding and shop info intact on page 1 */
-  .invoice-header-block,
-  .invoice-customer-row {
+  /* Keep top branding and shop info intact on page 1 without breaking before */
+  .surandai-bhavani-template .invoice-header-block {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+    page-break-before: avoid !important;
+    break-before: avoid !important;
+  }
+
+  /* First header row: Proprietor, phones, உ, god names */
+  .surandai-bhavani-template .invoice-header-block:first-of-type {
+    padding-bottom: 2px !important;
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Second header row: badges, deity icons, VTC logo */
+  .surandai-bhavani-template .invoice-header-block:nth-of-type(2) {
+    margin-top: 2px !important;
+    margin-bottom: 2px !important;
+  }
+
+  .surandai-bhavani-template .invoice-header-block:nth-of-type(2) img {
+    height: 42px !important;
+    max-width: 40px !important;
+  }
+
+  .surandai-bhavani-template .invoice-header-block:nth-of-type(2) .shrink-0.shadow-xs,
+  .surandai-bhavani-template .invoice-header-block:nth-of-type(2) .w-11,
+  .surandai-bhavani-template .invoice-header-block:nth-of-type(2) .w-14 {
+    width: 42px !important;
+  }
+
+  /* Center Brand Title & Large Prominent VTC Oval Logo */
+  .surandai-bhavani-template .brand-oval-logo,
+  .surandai-bhavani-template .invoice-header-block:nth-of-type(2) span.rounded-full {
+    font-size: 26px !important;
+    padding: 3px 20px !important;
+    border: 3.5px solid #6b0505 !important;
+    letter-spacing: 0.16em !important;
+    font-weight: 900 !important;
+    -webkit-text-stroke: 0.6px #6b0505 !important;
+    display: inline-block !important;
+  }
+
+  /* Third header row: Shop Name & Address */
+  .surandai-bhavani-template .invoice-header-block:nth-of-type(3) {
+    margin-top: 2px !important;
+    margin-bottom: 2.5px !important;
+  }
+
+  .surandai-bhavani-template .invoice-header-block:nth-of-type(3) h1 {
+    font-size: 17px !important;
+    line-height: 1.2 !important;
+    font-weight: 900 !important;
+    -webkit-text-stroke: 0.45px #6b0505 !important;
+  }
+
+  .surandai-bhavani-template .invoice-header-block:nth-of-type(3) div {
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+    margin-top: 1px !important;
+    font-weight: 700 !important;
+  }
+
+  /* Customer Line */
+  .surandai-bhavani-template .invoice-customer-row {
+    padding-top: 2px !important;
+    padding-bottom: 2.5px !important;
+    margin-top: 1.5px !important;
+    margin-bottom: 2.5px !important;
+    font-size: 11.5px !important;
+    line-height: 1.25 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-before: avoid !important;
+    break-before: avoid !important;
   }
 
   /* Table structure & pagination across pages */
@@ -106,6 +181,10 @@
     border-collapse: collapse !important;
     table-layout: fixed !important;
     box-sizing: border-box !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+    font-size: 11px !important;
+    border: 1.5px solid #0e6037 !important;
   }
 
   .surandai-bhavani-template thead {
@@ -116,13 +195,50 @@
     display: table-row-group !important;
   }
 
+  .surandai-bhavani-template th {
+    padding: 2.5px 3px !important;
+    font-size: 11.5px !important;
+    line-height: 1.2 !important;
+    font-weight: 800 !important;
+    border: 1px solid #0e6037 !important;
+  }
+
   /* Prevent individual items from getting chopped mid-row across page breaks */
   .surandai-bhavani-template tr {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
 
-  /* Keep totals, deductions, and summary blocks intact */
+  .surandai-bhavani-template td {
+    padding: 2px 3px !important;
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+    box-sizing: border-box !important;
+    word-break: break-word !important;
+    border-right: 1px solid #0e6037 !important;
+  }
+
+  .surandai-bhavani-template td .break-words {
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+    font-weight: 700 !important;
+  }
+
+  /* Totals, Deductions, and Summary Blocks */
+  .surandai-bhavani-template tr.font-black td,
+  .surandai-bhavani-template tr.border-t-2 td {
+    padding: 2.5px 3px !important;
+    font-size: 12.5px !important;
+    font-weight: 900 !important;
+    border-top: 2px solid #0e6037 !important;
+  }
+
+  .surandai-bhavani-template td .grid {
+    font-size: 11px !important;
+    row-gap: 1.5px !important;
+    padding: 2px 0 !important;
+  }
+
   .invoice-totals-section,
   .invoice-summary-box,
   .invoice-footer-block {
@@ -130,9 +246,11 @@
     break-inside: avoid !important;
   }
 
-  .surandai-bhavani-template td,
-  .surandai-bhavani-template th {
-    box-sizing: border-box !important;
-    word-break: break-word !important;
+  .surandai-bhavani-template .invoice-footer-block {
+    margin-top: 3px !important;
+    padding-top: 2px !important;
+    font-size: 10px !important;
+    line-height: 1.2 !important;
   }
 }
+

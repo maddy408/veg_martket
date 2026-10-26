@@ -150,13 +150,13 @@ export default function SurandaiInvoice({ bill, settings = {}, isCommissionView,
           : isA4
           ? 'max-w-[190mm] w-full p-3 text-sm'
           : 'max-w-[140mm] w-full min-h-[196mm] p-2 text-xs'
-      }`}
+      } print:block print:min-h-0 print:h-auto print:shadow-none print:m-0`}
       style={{
         minHeight: isSlip ? 'auto' : isA4 ? '280mm' : isAfx ? '192mm' : '196mm',
         boxSizing: 'border-box',
       }}
     >
-      <div className="flex flex-col flex-1 h-full min-h-full">
+      <div className="flex flex-col flex-1 h-full min-h-full print:block print:h-auto print:min-h-0 print:flex-none">
 
         {/* 1. Top Contact Bar with Center Sacred Inscription (Zero Overlap Guaranteed) */}
         <div className="invoice-header-block grid grid-cols-[28%_44%_28%] items-start pb-0.5 text-[11px] font-bold text-slate-900 leading-tight">
@@ -205,7 +205,7 @@ export default function SurandaiInvoice({ bill, settings = {}, isCommissionView,
           <div className="text-center flex-1 px-1 min-w-0">
             <div className="my-0.5 inline-block">
               <span
-                className={`inline-block bg-white text-[#6b0505] border-[#6b0505] font-serif font-black rounded-full tracking-widest leading-none shadow-xs ${
+                className={`brand-oval-logo inline-block bg-white text-[#6b0505] border-[#6b0505] font-serif font-black rounded-full tracking-widest leading-none shadow-xs ${
                   isSlip
                     ? 'text-base px-3.5 py-1 border-[2.5px]'
                     : isA4

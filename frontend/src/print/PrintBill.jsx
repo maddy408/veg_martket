@@ -72,7 +72,7 @@ export default function PrintBill() {
     : (modeParam ? modeParam === 'commission' : bill.bill_type === 'commission');
 
   return (
-    <div className="print-page-wrapper min-h-screen bg-slate-100 pb-12 print:p-0 print:m-0 print:bg-white print:min-h-0">
+    <div className="print-page-wrapper min-h-screen bg-slate-100 pb-12 print:p-0 print:m-0 print:bg-white print:min-h-0 print:h-auto">
       {/* Dynamic Overrides only when switching away from default AFX 120mm x 200mm */}
       {paperFormat !== 'afx' && (
         <style>{`
@@ -85,12 +85,17 @@ export default function PrintBill() {
               width: ${paperFormat === 'a4' ? '210mm' : paperFormat === 'slip' ? '80mm' : '148mm'} !important;
               min-width: ${paperFormat === 'a4' ? '210mm' : paperFormat === 'slip' ? '80mm' : '148mm'} !important;
               max-width: ${paperFormat === 'a4' ? '210mm' : paperFormat === 'slip' ? '80mm' : '148mm'} !important;
+              display: block !important;
+              height: auto !important;
+              min-height: 0 !important;
             }
             .surandai-bhavani-template {
               width: ${paperFormat === 'a4' ? '190mm' : paperFormat === 'slip' ? '76mm' : '142mm'} !important;
               min-width: ${paperFormat === 'a4' ? '190mm' : paperFormat === 'slip' ? '76mm' : '142mm'} !important;
               max-width: ${paperFormat === 'a4' ? '190mm' : paperFormat === 'slip' ? '76mm' : '142mm'} !important;
-              min-height: ${paperFormat === 'slip' ? 'auto' : paperFormat === 'a4' ? '280mm' : '196mm'} !important;
+              min-height: auto !important;
+              height: auto !important;
+              display: block !important;
             }
           }
         `}</style>
@@ -258,7 +263,7 @@ export default function PrintBill() {
       </div>
 
       {/* Main Print Container */}
-      <div className="print-container max-w-xl mx-auto px-4 flex justify-center">
+      <div className="print-container max-w-xl mx-auto px-4 flex justify-center print:block print:p-0 print:m-0 print:w-full">
         <SurandaiInvoice
           bill={bill}
           settings={settings}
